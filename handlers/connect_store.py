@@ -3,8 +3,8 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, ReplyKeyboardRemove
 
-from texts.message import check_connect, account
-from texts.button import b_account, b_hello
+from texts.message import check_connect, account, system
+from texts.button import b_account, b_hello, b_settings
 from keyboard.inline_keyboard import make_keyboard
 
 router = Router()
@@ -57,7 +57,7 @@ async def api_key(message: Message, state: FSMContext):
 @router.message(Store.writing_api_key)
 async def cmd_start(message: Message, state: FSMContext):
     await message.answer(
-        text="Выберите действие:",
+        text=system[0],
         reply_markup=make_keyboard(b_hello)
     )
     await state.set_state(Store.choosing_moves)
@@ -78,7 +78,7 @@ async def store_chosen(callback: types.CallbackQuery, state: FSMContext):
 @router.callback_query(Store.choosing_store, F.data == (b_account[-1]))
 async def account_settings(callback: types.CallbackQuery, state: FSMContext):
     await callback.message.answer(
-        text="Настройки аккаунта будут доступны здесь",
-        reply_markup=ReplyKeyboardRemove()
+        text=system[3],
+        reply_markup=make_keyboard(b_settings)
     )
     await state.set_state(Store.choosing_settings)
