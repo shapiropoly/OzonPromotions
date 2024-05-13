@@ -6,3 +6,4 @@ aiogram==3.6.0
 aiopg==1.4.0
 python-dotenv~=1.0.1
 pydantic~=2.7.1
+pydantic-settings==2.2.1

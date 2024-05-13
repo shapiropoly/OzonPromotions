@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from typing import Self, List
-from sqlalchemy import select, BIGINT, ForeignKey, String
+from typing import List
+from sqlalchemy import select, BIGINT
 from typing import TYPE_CHECKING
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship
