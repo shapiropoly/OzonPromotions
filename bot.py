@@ -4,6 +4,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from config_reader import config
 from handlers import common, connect_store
+from data.config import bot
 
 
 async def main():
@@ -13,7 +14,6 @@ async def main():
     )
 
     dp = Dispatcher(storage=MemoryStorage())
-    bot = Bot(config.bot_token.get_secret_value())
 
     dp.include_routers(common.router, connect_store.router)
 
