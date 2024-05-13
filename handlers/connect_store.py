@@ -20,7 +20,7 @@ class Store(StatesGroup):
     choosing_settings = State()
 
 
-@router.callback_query(Common.choosing_moves, F.data == (b_hello[0]))
+@router.callback_query(Common.choosing_moves, F.data == (b_hello[1]))
 async def name(callback: types.CallbackQuery, state: FSMContext):
     await callback.message.answer(
         text=account[0],
