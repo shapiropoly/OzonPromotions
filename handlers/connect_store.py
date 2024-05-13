@@ -31,7 +31,7 @@ async def name(callback: types.CallbackQuery, state: FSMContext):
 
 
 @router.message(Store.writing_name)
-async def surname(message: Message, state: FSMContext):
+async def client_id(message: Message, state: FSMContext):
     await message.answer(
         text=account[2],
         reply_markup=ReplyKeyboardRemove()
@@ -45,7 +45,7 @@ async def surname(message: Message, state: FSMContext):
 
 
 @router.message(Store.writing_client_id)
-async def surname(message: Message, state: FSMContext):
+async def api_key(message: Message, state: FSMContext):
     await message.answer(
         text=account[4],
         reply_markup=ReplyKeyboardRemove()

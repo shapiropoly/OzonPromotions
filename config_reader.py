@@ -1,11 +1,11 @@
 from pydantic import SecretStr
-from dotenv import dotenv_values
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class Settings:
-    def __init__(self):
-        env = dotenv_values("token.env")
-        self.bot_token = SecretStr(env.get("BOT_TOKEN"))
+class Settings(BaseSettings):
+    bot_token: SecretStr
+
+    model_config = SettingsConfigDict(env_file='token.env', env_file_encoding='utf-8')
 
 
 config = Settings()
