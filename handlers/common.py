@@ -5,16 +5,13 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import default_state, StatesGroup, State
 from aiogram.types import Message, ReplyKeyboardRemove
 
+from handlers.connect_store import Store
 from texts.message import hello
 from texts.button import b_hello
 
 from keyboard.inline_keyboard import make_keyboard
 
 router = Router()
-
-
-class Common(StatesGroup):
-    choosing_moves = State()
 
 
 @router.message(Command(commands=["start"]))
@@ -28,7 +25,7 @@ async def cmd_start(message: Message, state: FSMContext):
         text="Выберите действие:",
         reply_markup=make_keyboard(b_hello)
     )
-    await state.set_state(Common.choosing_moves)
+    await state.set_state(Store.choosing_moves)
 
 
 @router.message(StateFilter(None), Command(commands=["cancel"]))
