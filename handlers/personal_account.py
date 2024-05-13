@@ -4,7 +4,7 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, ReplyKeyboardRemove
 
 from handlers.common import Common
-from texts.Constants import available_moves
+from texts.button import b_hello
 from texts.message import account
 
 router = Router()
@@ -17,7 +17,7 @@ class Person(StatesGroup):
     writing_api_key = State()
 
 
-@router.callback_query(Common.choosing_moves, F.data == (available_moves[0]))
+@router.callback_query(Common.choosing_moves, F.data == (b_hello[0]))
 async def name(callback: types.CallbackQuery, state: FSMContext):
     await callback.message.answer(
         text=account[0],
