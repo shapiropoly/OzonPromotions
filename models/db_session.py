@@ -1,5 +1,6 @@
 from functools import wraps
 from os import environ
+from dotenv import load_dotenv
 
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base
@@ -16,6 +17,7 @@ class Base:
 Base = declarative_base(cls=Base)
 
 env = environ.get
+load_dotenv("data/token.env")
 
 __factory = None
 
@@ -26,7 +28,8 @@ def get_database_url(alembic: bool = False) -> str:
     if alembic:
         schema = "postgresql"
 
-    return f"{schema}://{env('db_host')}:{env('db_port')}/{env('db_name')}"
+    return (f"{schema}://"
+            f"{env('db_host')}:{env('db_port')}/{env('db_name')}")
 
 
 async def global_init():
@@ -38,19 +41,19 @@ async def global_init():
 
     engine = create_async_engine(conn_str, pool_pre_ping=True)
 
+    async with engine.begin() as conn:
+        # await conn.run_sync(SqlAlchemyBase.metadata.drop_all)
+        await conn.run_sync(Base.metadata.create_all)
+
     __factory = async_sessionmaker(
         engine, expire_on_commit=False
     )
-
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-    return engine
+    from . import __all_models  # noqa
 
 
 def create_session() -> AsyncSession:
     global __factory
-    return __factory()
+    return __factory()  # noqa
 
 
 def session_db(func):
@@ -58,4 +61,5 @@ def session_db(func):
     async def wrapper(*args, **kwargs):
         async with create_session() as session:
             return await func(*args, session=session, **kwargs)
+
     return wrapper

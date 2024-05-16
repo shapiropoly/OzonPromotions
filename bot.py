@@ -4,9 +4,11 @@ from aiogram import Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from handlers import common, connect_store
 from data.config import bot
+from models.db_session import global_init
 
 
 async def main():
+    await global_init()
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",

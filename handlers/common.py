@@ -6,10 +6,9 @@ from aiogram.fsm.state import default_state
 from aiogram.types import Message, ReplyKeyboardRemove
 
 from handlers.connect_store import Store
-from texts.message import hello, system, commands
-from texts.button import b_hello
-
 from keyboard.inline_keyboard import make_keyboard
+from utils.message import msg, btn
+
 
 router = Router()
 
@@ -18,31 +17,31 @@ router = Router()
 async def cmd_start(message: Message, state: FSMContext):
     await state.clear()
     await message.answer(
-        text=hello[0],
+        text=msg("hello", "0"),
         reply_markup=ReplyKeyboardRemove()
     )
     await message.answer(
-        text=system[0],
-        reply_markup=make_keyboard(b_hello)
+        text=msg("system", "0"),
+        reply_markup=make_keyboard(btn("hello", "0"))
     )
     await state.set_state(Store.choosing_moves)
 
 
 @router.message(StateFilter(None), Command(commands=["cancel"]))
-@router.message(default_state, F.text.lower() == commands[0])
+@router.message(default_state, F.text.lower() == msg("commands", "0"))
 async def cmd_cancel_no_state(message: Message, state: FSMContext):
     await state.set_data({})
     await message.answer(
-        text=system[1],
+        text=msg("system", "1"),
         reply_markup=ReplyKeyboardRemove()
     )
 
 
 @router.message(Command(commands=["cancel"]))
-@router.message(F.text.lower() == commands[0])
+@router.message(F.text.lower() == msg("commands", "0"))
 async def cmd_cancel(message: Message, state: FSMContext):
     await state.clear()
     await message.answer(
-        text=system[2],
+        text=msg("system", "2"),
         reply_markup=ReplyKeyboardRemove()
     )

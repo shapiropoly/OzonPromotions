@@ -3,9 +3,10 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, ReplyKeyboardRemove
 
-from texts.message import check_connect, account, system
-from texts.button import b_account, b_hello, b_settings
+from texts.message import check_connect, account
+from texts.button import b_account, b_hello
 from keyboard.inline_keyboard import make_keyboard
+from utils.message import btn, msg
 
 router = Router()
 
@@ -19,10 +20,10 @@ class Store(StatesGroup):
     choosing_moves = State()
 
 
-@router.callback_query(Store.choosing_moves, F.data == (b_hello[1]))
+@router.callback_query(Store.choosing_moves, F.data == (btn("hello", "0")))
 async def name(callback: types.CallbackQuery, state: FSMContext):
     await callback.message.answer(
-        text=account[0],
+        text=msg("account", "0"),
         reply_markup=ReplyKeyboardRemove()
     )
     # TODO Сделать добавление имени в БД
@@ -32,11 +33,7 @@ async def name(callback: types.CallbackQuery, state: FSMContext):
 @router.message(Store.writing_name)
 async def client_id(message: Message, state: FSMContext):
     await message.answer(
-        text=account[2],
-        reply_markup=ReplyKeyboardRemove()
-    )
-    await message.answer(
-        text=account[3],
+        text=msg("account", "1"),
         reply_markup=ReplyKeyboardRemove()
     )
     # TODO Сделать добавление client-id в БД
@@ -46,7 +43,7 @@ async def client_id(message: Message, state: FSMContext):
 @router.message(Store.writing_client_id)
 async def api_key(message: Message, state: FSMContext):
     await message.answer(
-        text=account[4],
+        text=msg("account", "2"),
         reply_markup=ReplyKeyboardRemove()
     )
     # TODO Сделать добавление api-key в БД
@@ -54,31 +51,22 @@ async def api_key(message: Message, state: FSMContext):
     await state.set_state(Store.writing_api_key)
 
 
-@router.message(Store.writing_api_key)
-async def cmd_start(message: Message, state: FSMContext):
-    await message.answer(
-        text=system[0],
-        reply_markup=make_keyboard(b_hello)
-    )
-    await state.set_state(Store.choosing_moves)
-
-
 # TODO добавить проверку наличия пользователя в БД
-@router.callback_query(Store.choosing_moves, F.data == (b_hello[0]))
-async def store_chosen(callback: types.CallbackQuery, state: FSMContext):
-    await state.update_data(chosen_store=callback.message.text.lower())
-    await callback.message.answer(
-        text=check_connect[0],
+@router.message(Store.writing_api_key)
+async def store_chosen(message: Message, state: FSMContext):
+    await state.update_data(chosen_store=message.text.lower())
+    await message.answer(
+        text=msg("check_connect", "0"),
         # TODO добавить в b_account компании продавца, полученные из Озона
-        reply_markup=make_keyboard(b_account)
-    )
+        reply_markup=make_keyboard(btn("account", "0"))
+        )
     await state.set_state(Store.choosing_store)
 
 
-@router.callback_query(Store.choosing_store, F.data == (b_account[-1]))
+@router.callback_query(Store.choosing_store, F.data == (btn("account", "3")))
 async def account_settings(callback: types.CallbackQuery, state: FSMContext):
     await callback.message.answer(
-        text=system[3],
-        reply_markup=make_keyboard(b_settings)
+        text="Настройки аккаунта будут доступны здесь",
+        reply_markup=ReplyKeyboardRemove()
     )
     await state.set_state(Store.choosing_settings)

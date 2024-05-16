@@ -3,8 +3,9 @@ from datetime import date
 import asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from models.db_session import global_init, session_db, get_database_url
+from models.db_session import global_init, session_db, get_database_url, env
 from models import Promotions, Companies, Users
+from utils.message import btn
 
 
 async def main():
@@ -20,7 +21,7 @@ async def create_company(session: AsyncSession):
 
 @session_db
 async def create_user(session: AsyncSession):
-    user = Users(telegram_id=78594589458, username="test_username_3", name="name_3")
+    user = Users(telegram_id=2989348, username="test_username_5", name="name_5")
     await user.save(session=session)
 
 
@@ -39,5 +40,5 @@ async def create_promo(session: AsyncSession):
 
 
 if __name__ == "__main__":
-    print(get_database_url(alembic=True))
+    print(get_database_url(alembic=False))
     asyncio.run(main())

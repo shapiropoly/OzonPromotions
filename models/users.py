@@ -24,16 +24,15 @@ class Users(Base):
         back_populates="users")
 
     @classmethod
-    async def get_users(cls, name: str, session: AsyncSession) -> Self:
+    async def get_user(cls, telegram_id: int, session: AsyncSession) -> str:
         """
-        Get object by company_name
+        Get object by username
 
-        :param name: company_name
+        :param telegram_id:
         :param session: db session
-        :return: Companies object
+        :return: Users object
         """
-
-        _ = await session.execute(select(cls).where(cls.company_name == name))
+        _= await session.execute(select(cls.name).where(cls.telegram_id == telegram_id))
         return _.scalar()
 
     async def save(self, session: AsyncSession):
