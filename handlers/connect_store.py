@@ -1,72 +1,102 @@
 from aiogram import Router, F, types
+from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, ReplyKeyboardRemove
+from sqlalchemy.orm import session
 
+from models import User, Companies
+from models.db_session import session_db
 from texts.message import check_connect, account
-from texts.button import b_account, b_hello
 from keyboard.inline_keyboard import make_keyboard
 from utils.message import btn, msg
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = Router()
 
 
-class Store(StatesGroup):
+class Company(StatesGroup):
     writing_name = State()
     writing_client_id = State()
     writing_api_key = State()
-    choosing_store = State()
+    choosing_company = State()
+    connection = State()
     choosing_settings = State()
     choosing_moves = State()
 
 
-@router.callback_query(Store.choosing_moves, F.data == (btn("hello", "0")))
+@router.callback_query(Company.choosing_moves, F.data == (btn("hello", "0")))
 async def name(callback: types.CallbackQuery, state: FSMContext):
     await callback.message.answer(
         text=msg("account", "0"),
         reply_markup=ReplyKeyboardRemove()
     )
-    # TODO Сделать добавление имени в БД
-    await state.set_state(Store.writing_name)
+    await state.set_state(Company.writing_name)
 
 
-@router.message(Store.writing_name)
+@router.message(Company.writing_name)
 async def client_id(message: Message, state: FSMContext):
+    await state.update_data(name=message.text)
     await message.answer(
         text=msg("account", "1"),
         reply_markup=ReplyKeyboardRemove()
     )
-    # TODO Сделать добавление client-id в БД
-    await state.set_state(Store.writing_client_id)
+    await state.set_state(Company.writing_client_id)
 
 
-@router.message(Store.writing_client_id)
-async def api_key(message: Message, state: FSMContext):
+@router.message(Company.writing_client_id)
+@session_db
+async def api_key(message: Message, state: FSMContext, session: AsyncSession):
+    await state.update_data(client_id=message.text)
+    data = await state.get_data()
+    name = data.get("name")
+
     await message.answer(
         text=msg("account", "2"),
         reply_markup=ReplyKeyboardRemove()
     )
-    # TODO Сделать добавление api-key в БД
+    user = User(name=name, telegram_id=message.from_user.id, username=message.from_user.username)
+    await user.save(session=session)
 
-    await state.set_state(Store.writing_api_key)
+    await state.set_state(Company.writing_api_key)
 
 
 # TODO добавить проверку наличия пользователя в БД
-@router.message(Store.writing_api_key)
-async def store_chosen(message: Message, state: FSMContext):
-    await state.update_data(chosen_store=message.text.lower())
+@router.message(Company.writing_api_key)
+async def company_name(message: Message, state: FSMContext):
+    await state.update_data(company_name=message.text)
     await message.answer(
         text=msg("check_connect", "0"),
         # TODO добавить в b_account компании продавца, полученные из Озона
-        reply_markup=make_keyboard(btn("account", "0"))
-        )
-    await state.set_state(Store.choosing_store)
+        reply_markup=make_keyboard([btn("account", "0"), btn("account", "1")])
+    )
+
+    await state.set_state(Company.choosing_company)
 
 
-@router.callback_query(Store.choosing_store, F.data == (btn("account", "3")))
-async def account_settings(callback: types.CallbackQuery, state: FSMContext):
-    await callback.message.answer(
+@router.callback_query(Company.choosing_company)
+@session_db
+async def connection(message: Message, state: FSMContext, session: AsyncSession):
+    data = await state.get_data()
+    client_id = data.get("client_id")
+    api_key = data.get("api_key")
+    company_name = data.get("company_name")
+
+    await message.answer(
+        text="Подключение прошло успешно!",
+        reply_markup=ReplyKeyboardRemove()
+    )
+
+    company = Companies(client_id=client_id, api_key=api_key, company_name=company_name)
+    await company.save(session=session)
+    await state.set_state(Company.connection)
+
+
+@router.callback_query(Company.choosing_settings, F.data == (btn("account", "2")))
+async def account_settings(message: Message, state: FSMContext):
+
+    await message.answer(
         text="Настройки аккаунта будут доступны здесь",
         reply_markup=ReplyKeyboardRemove()
     )
-    await state.set_state(Store.choosing_settings)
+    await state.set_state(Company.choosing_moves)

@@ -4,7 +4,7 @@ import asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.db_session import global_init, session_db, get_database_url, env
-from models import Promotions, Companies, Users
+from models import Promotions, Companies, User
 from utils.message import btn
 
 
@@ -21,7 +21,7 @@ async def create_company(session: AsyncSession):
 
 @session_db
 async def create_user(session: AsyncSession):
-    user = Users(telegram_id=2989348, username="test_username_5", name="name_5")
+    user = User(telegram_id=122322, username="test_username_6", name="name_6")
     await user.save(session=session)
 
 
@@ -40,5 +40,5 @@ async def create_promo(session: AsyncSession):
 
 
 if __name__ == "__main__":
-    print(get_database_url(alembic=False))
+    # print(get_database_url(alembic=False))
     asyncio.run(main())

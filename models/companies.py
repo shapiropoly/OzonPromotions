@@ -11,7 +11,7 @@ from .users_to_company import users_to_company_association_table
 
 if TYPE_CHECKING:
     from .promotions import Promotions
-    from .users import Users
+    from .user import User
 
 
 class Companies(Base):
@@ -24,12 +24,12 @@ class Companies(Base):
     promotions: Mapped[List[Promotions]] = relationship(
         secondary=companies_to_promotions_association_table,
         back_populates="companies")
-    users: Mapped[List[Users]] = relationship(
+    users: Mapped[List[User]] = relationship(
         secondary=users_to_company_association_table,
         back_populates="companies")
 
     @classmethod
-    async def get_by_name(cls, name: str, session: AsyncSession) -> List["Companies"]:
+    async def get_by_name(cls, name: str, session: AsyncSession) -> List[Companies]:
         """
         Get object by company_name
 

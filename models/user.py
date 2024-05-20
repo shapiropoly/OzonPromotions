@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from . import Companies
 
 
-class Users(Base):
+class User(Base):
     __tablename__ = 'users'
 
     id: Mapped[int] = mapped_column(BIGINT, autoincrement=True, primary_key=True)
