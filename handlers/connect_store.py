@@ -27,6 +27,7 @@ class Company(StatesGroup):
 
 @router.callback_query(Company.choosing_moves, F.data == (btn("hello", "0")))
 async def name(callback: types.CallbackQuery, state: FSMContext):
+    # user = User(telegram_id=message.from_user.id)
     await callback.message.answer(
         text=msg("account", "0"),
         reply_markup=ReplyKeyboardRemove()
@@ -68,7 +69,7 @@ async def company_name(message: Message, state: FSMContext):
     await message.answer(
         text=msg("check_connect", "0"),
         # TODO добавить в b_account компании продавца, полученные из Озона
-        reply_markup=make_keyboard([btn("account", "0"), btn("account", "1")])
+        reply_markup=make_keyboard([btn("account", "0"), btn("account", "1"), btn("account", "2")])
     )
 
     await state.set_state(Company.choosing_company)
@@ -94,7 +95,9 @@ async def connection(message: Message, state: FSMContext, session: AsyncSession)
 
 @router.callback_query(Company.choosing_settings, F.data == (btn("account", "2")))
 async def account_settings(message: Message, state: FSMContext):
-
+    # удалить команию, добавить компанию
+    # при удалении компании, вывести список компаний в виде кнопок
+    # аллерт с подтверждением
     await message.answer(
         text="Настройки аккаунта будут доступны здесь",
         reply_markup=ReplyKeyboardRemove()

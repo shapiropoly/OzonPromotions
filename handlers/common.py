@@ -22,7 +22,7 @@ async def cmd_start(message: Message, state: FSMContext):
     )
     await message.answer(
         text=msg("system", "0"),
-        reply_markup=make_keyboard([btn("hello", "0"), btn("hello", "1")])
+        reply_markup=make_keyboard([btn("hello", "0")])
     )
     await state.set_state(Company.choosing_moves)
 
