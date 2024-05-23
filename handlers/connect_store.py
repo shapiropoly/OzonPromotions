@@ -73,6 +73,7 @@ async def api_key(message: Message, state: FSMContext, session: AsyncSession):
 
 # TODO добавить проверку наличия пользователя в БД
 @router.message(Company.writing_api_key)
+@router.message(Company.connection)
 async def company_name(message: Message, state: FSMContext):
     await state.update_data(company_name=message.text)
     await message.answer(
