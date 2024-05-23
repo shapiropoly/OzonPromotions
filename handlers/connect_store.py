@@ -41,7 +41,7 @@ async def name(callback_query: CallbackQuery, state: FSMContext, session: AsyncS
         )
         await state.set_state(Company.writing_name)
     else:
-        await callback_query.message.answer("Пользователь зарегистрирован.")
+        await state.set_state(Company.connection)
 
 
 @router.message(Company.writing_name)
