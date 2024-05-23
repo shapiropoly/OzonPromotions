@@ -33,6 +33,7 @@ async def name(callback_query: CallbackQuery, state: FSMContext, session: AsyncS
 
     result = await session.execute(select(User).filter(User.telegram_id == current_telegram_id))
     user = result.scalars().first()
+
     if not user:
         await callback_query.message.answer(
             text=msg("account", "0"),
