@@ -131,7 +131,7 @@ async def check_current_company(callback_query: CallbackQuery, state: FSMContext
 async def account(message: Message, state: FSMContext):
     await message.answer(
         text=msg("account", "0"),
-        # TODO добавить в b_account компании продавца, полученные из Озона
+        # TODO сделать кнопки компаний юзера из бд
         reply_markup=make_keyboard([btn("account", "0"), btn("account", "1"), btn("account", "2")])
     )
 
