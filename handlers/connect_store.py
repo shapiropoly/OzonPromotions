@@ -2,7 +2,8 @@ from aiogram import Router, F, types
 from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
-from aiogram.types import Message, ReplyKeyboardRemove
+from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
+from sqlalchemy import select
 from sqlalchemy.orm import session
 
 from models import User, Companies
@@ -26,13 +27,20 @@ class Company(StatesGroup):
 
 
 @router.callback_query(Company.choosing_moves, F.data == (btn("hello", "0")))
-async def name(callback: types.CallbackQuery, state: FSMContext):
-    # user = User(telegram_id=message.from_user.id)
-    await callback.message.answer(
-        text=msg("account", "0"),
-        reply_markup=ReplyKeyboardRemove()
-    )
-    await state.set_state(Company.writing_name)
+@session_db
+async def name(callback_query: CallbackQuery, state: FSMContext, session: AsyncSession):
+    current_telegram_id = callback_query.from_user.id
+
+    result = await session.execute(select(User).filter(User.telegram_id == current_telegram_id))
+    user = result.scalars().first()
+    if not user:
+        await callback_query.message.answer(
+            text=msg("account", "0"),
+            reply_markup=ReplyKeyboardRemove()
+        )
+        await state.set_state(Company.writing_name)
+    else:
+        await callback_query.message.answer("Пользователь зарегистрирован.")
 
 
 @router.message(Company.writing_name)
