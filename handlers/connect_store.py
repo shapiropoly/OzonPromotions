@@ -20,6 +20,7 @@ class Company(StatesGroup):
     writing_name = State()
     writing_client_id = State()
     writing_api_key = State()
+    writing_company_name = State()
     choosing_company = State()
     connection = State()
     choosing_settings = State()
@@ -72,20 +73,19 @@ async def api_key(message: Message, state: FSMContext, session: AsyncSession):
     await state.set_state(Company.writing_api_key)
 
 
-# TODO добавить проверку наличия пользователя в БД
-@router.message(Company.connection)
+@router.message(Company.writing_api_key)
 async def company_name(message: Message, state: FSMContext):
     await state.update_data(company_name=message.text)
     await message.answer(
-        text=msg("check_connect", "0"),
+        text=msg("account", "3"),
         # TODO добавить в b_account компании продавца, полученные из Озона
-        reply_markup=make_keyboard([btn("account", "0"), btn("account", "1"), btn("account", "2")])
+        reply_markup=ReplyKeyboardRemove()
     )
 
-    await state.set_state(Company.choosing_company)
+    await state.set_state(Company.writing_company_name)
 
 
-@router.message(Company.writing_api_key)
+@router.message(Company.writing_company_name)
 @router.callback_query(Company.connect)
 @session_db
 async def connection(callback_query: CallbackQuery, state: FSMContext, session: AsyncSession):
@@ -102,6 +102,18 @@ async def connection(callback_query: CallbackQuery, state: FSMContext, session: 
     company = Companies(client_id=client_id, api_key=api_key, company_name=company_name)
     await company.save(session=session)
     await state.set_state(Company.connection)
+
+
+# TODO добавить проверку наличия пользователя в БД
+@router.message(Company.connection)
+async def account(message: Message, state: FSMContext):
+    await message.answer(
+        text=msg("check_connect", "0"),
+        # TODO добавить в b_account компании продавца, полученные из Озона
+        reply_markup=make_keyboard([btn("account", "0"), btn("account", "1"), btn("account", "2")])
+    )
+
+    await state.set_state(Company.choosing_company)
 
 
 @router.callback_query(Company.choosing_settings, F.data == (btn("account", "2")))
