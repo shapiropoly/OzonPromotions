@@ -88,13 +88,13 @@ async def company_name(message: Message, state: FSMContext):
 @router.message(Company.writing_api_key)
 @router.callback_query(Company.connect)
 @session_db
-async def connection(message: Message, state: FSMContext, session: AsyncSession):
+async def connection(callback_query: CallbackQuery, state: FSMContext, session: AsyncSession):
     data = await state.get_data()
     client_id = data.get("client_id")
     api_key = data.get("api_key")
     company_name = data.get("company_name")
 
-    await message.answer(
+    await callback_query.message.answer(
         text="Подключение прошло успешно!",
         reply_markup=ReplyKeyboardRemove()
     )
