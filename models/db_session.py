@@ -1,6 +1,5 @@
 from functools import wraps
 from os import environ
-from dotenv import load_dotenv
 
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base
@@ -17,7 +16,6 @@ class Base:
 Base = declarative_base(cls=Base)
 
 env = environ.get
-load_dotenv("data/token.env")
 
 __factory = None
 
@@ -28,7 +26,7 @@ def get_database_url(alembic: bool = False) -> str:
     if alembic:
         schema = "postgresql"
 
-    return (f"{schema}://"
+    return (f"{schema}://{env('db_login')}:{env('db_password')}@"
             f"{env('db_host')}:{env('db_port')}/{env('db_name')}")
 
 
