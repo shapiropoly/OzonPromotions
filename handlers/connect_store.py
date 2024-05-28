@@ -22,9 +22,9 @@ class Process(StatesGroup):
     writing_client_id = State()
     writing_api_key = State()
     writing_company_name = State()
-    account = State()
     check_current_company = State()
     choosing_company = State()
+    account = State()
     choosing_settings = State()
     choosing_moves = State()
     connect = State()
@@ -96,47 +96,17 @@ async def connection(message: Message, state: FSMContext, session: AsyncSession)
     api_key = data.get("api_key")
     company_name = data.get("company_name")
 
+    # TODO добавить проверку на актуальность client-id api-key
+    # TODO если все ок, перебрасывать на state account, если нет запрашивать повторно
+
+    user = await User.get_user(message.from_user.id, session)
     await message.answer(
         text="Подключение прошло успешно!",
-        reply_markup=ReplyKeyboardRemove()
+        reply_markup=make_keyboard_account(user.companies)
     )
     company = Company(client_id=client_id, api_key=api_key, company_name=company_name)
     await company.save(session=session)
     await state.set_state(Process.account)
-    await account(message, state)
-
-
-# @router.message(Process.writing_company_name)
-# @session_db
-# async def connection(message: Message, state: FSMContext, session: AsyncSession):
-#     await state.update_data(company_name=message.text)
-#     data = await state.get_data()
-#     client_id = data.get("client_id")
-#     api_key = data.get("api_key")
-#     company_name = data.get("company_name")
-#
-#     # TODO добавить проверку на актуальность client-id api-key
-#     # TODO если все ок, перебрасывать на state account, если нет запрашивать повторно
-#
-#     user = await User.get_user(message.from_user.id, session)
-#     await message.answer(
-#         text="Подключение прошло успешно!",
-#         reply_markup=make_keyboard_account(user.companies)
-#     )
-#     company = Company(client_id=client_id, api_key=api_key, company_name=company_name)
-#     await company.save(session=session)
-#     await state.set_state(Process.account)
-
-
-# TODO добавить проверку наличия пользователя в БД
-
-async def account(message: Message, state: FSMContext):
-    await message.answer(
-        text=msg("account", "0"),
-        # TODO сделать кнопки компаний юзера из бд
-        reply_markup=ReplyKeyboardRemove()
-    )
-    await state.set_state(Process.choosing_company)
 
 
 @router.callback_query(Process.check_current_company)
@@ -157,6 +127,18 @@ async def check_current_company(callback_query: CallbackQuery, state: FSMContext
     # TODO если все ок, то вывести список компаний
     else:
         await state.set_state(Process.account)
+
+
+# TODO добавить проверку наличия пользователя в БД
+@router.message(Process.account)
+async def account(message: Message, state: FSMContext):
+    await message.answer(
+        text=msg("account", "0"),
+        # TODO сделать кнопки компаний юзера из бд
+        reply_markup=make_keyboard([btn("account", "0"), btn("account", "1"), btn("account", "2")])
+    )
+
+    await state.set_state(Process.choosing_company)
 
 
 @router.callback_query(Process.choosing_settings, F.data == (btn("account", "2")))
