@@ -100,12 +100,12 @@ async def connection(message: Message, state: FSMContext, session: AsyncSession)
     # TODO если все ок, перебрасывать на state account, если нет запрашивать повторно
 
     user = await User.get_user(message.from_user.id, session)
+    company = Company(client_id=client_id, api_key=api_key, company_name=company_name)
+    await company.save(session=session)
     await message.answer(
         text="Подключение прошло успешно!",
         reply_markup=make_keyboard_account(user.companies)
     )
-    company = Company(client_id=client_id, api_key=api_key, company_name=company_name)
-    await company.save(session=session)
     await state.set_state(Process.account)
 
 
