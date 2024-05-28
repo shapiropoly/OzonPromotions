@@ -107,6 +107,7 @@ async def connection(message: Message, state: FSMContext, session: AsyncSession)
     company = Company(client_id=client_id, api_key=api_key, company_name=company_name)
     await company.save(session=session)
     await state.set_state(Process.account)
+    await account(message, state)
 
 
 @router.callback_query(Process.check_current_company)
@@ -130,7 +131,6 @@ async def check_current_company(callback_query: CallbackQuery, state: FSMContext
 
 
 # TODO добавить проверку наличия пользователя в БД
-@router.message(Process.account)
 async def account(message: Message, state: FSMContext):
     await message.answer(
         text=msg("account", "0"),
