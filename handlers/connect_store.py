@@ -102,12 +102,11 @@ async def connection(message: Message, state: FSMContext, session: AsyncSession)
     user = await User.get_user(message.from_user.id, session)
     await message.answer(
         text="Подключение прошло успешно!",
-        reply_markup=make_keyboard_account(user.companies)
+        reply_markup=make_keyboard([btn("hello", "0")])
     )
     company = Company(client_id=client_id, api_key=api_key, company_name=company_name)
     await company.save(session=session)
     await state.set_state(Process.account)
-    await account(message, state)
 
 
 @router.callback_query(Process.check_current_company)
@@ -127,12 +126,13 @@ async def check_current_company(callback_query: CallbackQuery, state: FSMContext
         await state.set_state(Process.writing_name)
     # TODO если все ок, то вывести список компаний
     else:
-        await account(callback_query.message, state)
+        await state.set_state(Process.account)
 
 
 # TODO добавить проверку наличия пользователя в БД
-async def account(message: Message, state: FSMContext):
-    await message.answer(
+@router.callback_query(Process.account, F.data == (btn("hello", "0")))
+async def account(callback_query: CallbackQuery, state: FSMContext):
+    await callback_query.message.answer(
         text=msg("account", "0"),
         # TODO сделать кнопки компаний юзера из бд
         reply_markup=make_keyboard([btn("account", "0"), btn("account", "1"), btn("account", "2")])
@@ -141,21 +141,21 @@ async def account(message: Message, state: FSMContext):
     await state.set_state(Process.choosing_company)
 
 
-@router.callback_query(Process.choosing_settings, F.data == (btn("account", "2")))
-async def account_settings(message: Message, state: FSMContext):
+@router.callback_query(Process.choosing_company, F.data == (btn("account", "2")))
+async def account_settings(callback_query: CallbackQuery, state: FSMContext):
     # удалить команию, добавить компанию
     # TODO сделать удаление компании из БД по кнопкам (здесь также выводить список кнопок с компаниями)
     # TODO сделать добавление — проводим заново по состояниям добавления компании
     # при удалении компании, вывести список компаний в виде кнопок
     # аллерт с подтверждением
-    await message.answer(
+    await callback_query.message.answer(
         text="Настройки аккаунта будут доступны здесь",
         reply_markup=ReplyKeyboardRemove()
     )
-    await state.set_state(Process.choosing_moves)
+    await state.set_state(Process.choosing_settings)
 
 
-@router.callback_query(Process.choosing_moves)
+@router.callback_query(Process.choosing_company, F.data == (btn("account", "0")))
 async def management_promotions(callback_query: CallbackQuery, state: FSMContext):
     await callback_query.message.answer(
         text="Управление акциями",
