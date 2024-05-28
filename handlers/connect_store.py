@@ -17,7 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 router = Router()
 
 
-class Company(StatesGroup):
+class Process(StatesGroup):
     writing_name = State()
     writing_client_id = State()
     writing_api_key = State()
@@ -28,9 +28,10 @@ class Company(StatesGroup):
     choosing_settings = State()
     choosing_moves = State()
     connect = State()
+    manage_promotions = State()
 
 
-@router.callback_query(Company.choosing_moves, F.data == (btn("hello", "0")))
+@router.callback_query(Process.choosing_moves, F.data == (btn("hello", "0")))
 @session_db
 async def name(callback_query: CallbackQuery, state: FSMContext, session: AsyncSession):
     current_telegram_id = callback_query.from_user.id
@@ -42,22 +43,22 @@ async def name(callback_query: CallbackQuery, state: FSMContext, session: AsyncS
             text=msg("registration", "0"),
             reply_markup=ReplyKeyboardRemove()
         )
-        await state.set_state(Company.writing_name)
+        await state.set_state(Process.writing_name)
     else:
-        await state.set_state(Company.check_current_company)
+        await state.set_state(Process.check_current_company)
 
 
-@router.message(Company.writing_name)
+@router.message(Process.writing_name)
 async def client_id(message: Message, state: FSMContext):
     await state.update_data(name=message.text)
     await message.answer(
         text=msg("registration", "1"),
         reply_markup=ReplyKeyboardRemove()
     )
-    await state.set_state(Company.writing_client_id)
+    await state.set_state(Process.writing_client_id)
 
 
-@router.message(Company.writing_client_id)
+@router.message(Process.writing_client_id)
 @session_db
 async def api_key(message: Message, state: FSMContext, session: AsyncSession):
     await state.update_data(client_id=int(message.text))
@@ -72,10 +73,10 @@ async def api_key(message: Message, state: FSMContext, session: AsyncSession):
     user = User(name=name, telegram_id=message.from_user.id, username=message.from_user.username)
     await user.save(session=session)
 
-    await state.set_state(Company.writing_api_key)
+    await state.set_state(Process.writing_api_key)
 
 
-@router.message(Company.writing_api_key)
+@router.message(Process.writing_api_key)
 async def company_name(message: Message, state: FSMContext):
     await state.update_data(api_key=message.text)
     await message.answer(
@@ -83,10 +84,10 @@ async def company_name(message: Message, state: FSMContext):
         # TODO добавить в b_account компании продавца, полученные из Озона
         reply_markup=ReplyKeyboardRemove()
     )
-    await state.set_state(Company.writing_company_name)
+    await state.set_state(Process.writing_company_name)
 
 
-@router.message(Company.writing_company_name)
+@router.message(Process.writing_company_name)
 @session_db
 async def connection(message: Message, state: FSMContext, session: AsyncSession):
     await state.update_data(company_name=message.text)
@@ -105,10 +106,10 @@ async def connection(message: Message, state: FSMContext, session: AsyncSession)
     )
     company = Company(client_id=client_id, api_key=api_key, company_name=company_name)
     await company.save(session=session)
-    await state.set_state(Company.account)
+    await state.set_state(Process.account)
 
 
-@router.callback_query(Company.check_current_company)
+@router.callback_query(Process.check_current_company)
 @session_db
 async def check_current_company(callback_query: CallbackQuery, state: FSMContext, session: AsyncSession):
     # TODO проверить client-id api-key текущего пользователя в БД
@@ -122,14 +123,14 @@ async def check_current_company(callback_query: CallbackQuery, state: FSMContext
             text=msg("registration", "0"),
             reply_markup=ReplyKeyboardRemove()
         )
-        await state.set_state(Company.writing_name)
+        await state.set_state(Process.writing_name)
     # TODO если все ок, то вывести список компаний
     else:
-        await state.set_state(Company.account)
+        await state.set_state(Process.account)
 
 
 # TODO добавить проверку наличия пользователя в БД
-@router.message(Company.account)
+@router.message(Process.account)
 async def account(message: Message, state: FSMContext):
     await message.answer(
         text=msg("account", "0"),
@@ -137,10 +138,10 @@ async def account(message: Message, state: FSMContext):
         reply_markup=make_keyboard([btn("account", "0"), btn("account", "1"), btn("account", "2")])
     )
 
-    await state.set_state(Company.choosing_company)
+    await state.set_state(Process.choosing_company)
 
 
-@router.callback_query(Company.choosing_settings, F.data == (btn("account", "2")))
+@router.callback_query(Process.choosing_settings, F.data == (btn("account", "2")))
 async def account_settings(message: Message, state: FSMContext):
     # удалить команию, добавить компанию
     # TODO сделать удаление компании из БД по кнопкам (здесь также выводить список кнопок с компаниями)
@@ -151,4 +152,17 @@ async def account_settings(message: Message, state: FSMContext):
         text="Настройки аккаунта будут доступны здесь",
         reply_markup=ReplyKeyboardRemove()
     )
-    await state.set_state(Company.choosing_moves)
+    await state.set_state(Process.choosing_moves)
+
+
+@router.callback_query(Process.choosing_moves)
+async def management_promotions(callback_query: CallbackQuery, state: FSMContext):
+    # удалить команию, добавить компанию
+    # при удалении компании, вывести список компаний в виде кнопок
+    # аллерт с подтверждением
+    await callback_query.message.answer(
+        text="Управление акциями",
+        reply_markup=make_keyboard(
+            [btn("promotions_scenarios", "0"), btn("promotions_scenarios", "1"), btn("promotions_scenarios", "2")])
+    )
+    await state.set_state(Process.manage_promotions)
