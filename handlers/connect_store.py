@@ -157,9 +157,6 @@ async def account_settings(message: Message, state: FSMContext):
 
 @router.callback_query(Process.choosing_moves)
 async def management_promotions(callback_query: CallbackQuery, state: FSMContext):
-    # удалить команию, добавить компанию
-    # при удалении компании, вывести список компаний в виде кнопок
-    # аллерт с подтверждением
     await callback_query.message.answer(
         text="Управление акциями",
         reply_markup=make_keyboard(
