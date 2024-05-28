@@ -45,11 +45,16 @@ class Utils:
                     return None
 
     async def promos_candidates(self, action_id):
-        endpoint = '/v1/actions/products'
+        endpoint = '/v1/actions/candidates'
         url = self.base_url + endpoint
+        payload = {
+            "action_id": action_id,
+            "limit": 10,
+            "offset": 0
+        }
 
         async with aiohttp.ClientSession(headers=self.headers) as session:
-            async with session.get(url) as response:
+            async with session.post(url, json=payload) as response:
                 if response.status == 200:
                     all_candidates = await response.json()
                 else:
