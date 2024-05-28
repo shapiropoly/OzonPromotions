@@ -9,6 +9,7 @@ from sqlalchemy.orm import session
 from keyboard.keyboard_account import make_keyboard_account
 from models import User, Company
 from models.db_session import session_db
+from ozon.utils import Utils
 from texts.message import check_connect, account
 from keyboard.inline_keyboard import make_keyboard
 from utils.message import btn, msg
@@ -84,7 +85,6 @@ async def company_name(message: Message, state: FSMContext):
     await state.update_data(api_key=message.text)
     await message.answer(
         text=msg("registration", "3"),
-        # TODO добавить в b_account компании продавца, полученные из Озона
         reply_markup=ReplyKeyboardRemove()
     )
     await state.set_state(Process.writing_company_name)
@@ -99,11 +99,9 @@ async def connection(message: Message, state: FSMContext, session: AsyncSession)
     api_key = data.get("api_key")
     company_name = data.get("company_name")
 
-    # TODO добавить проверку на актуальность client-id api-key
-    # TODO если все ок, перебрасывать на state account, если нет запрашивать повторно
-
     user = await User.get_user(message.from_user.id, session)
     await message.answer(
+        # TODO переместить под клавиатуру (ВСЕГДА)
         text="Подключение прошло успешно!",
         reply_markup=make_keyboard([btn("hello", "0")])
     )
@@ -115,7 +113,7 @@ async def connection(message: Message, state: FSMContext, session: AsyncSession)
 @router.callback_query(Process.check_current_company)
 @session_db
 async def check_current_company(callback_query: CallbackQuery, state: FSMContext, session: AsyncSession):
-    # TODO проверить client-id api-key текущего пользователя в БД
+    # TODO получить client-id api-key текущего пользователя в БД
     current_telegram_id = callback_query.from_user.id
     result = await session.execute(select(User).filter(User.telegram_id == current_telegram_id))
     user = result.scalars().first()
@@ -127,12 +125,11 @@ async def check_current_company(callback_query: CallbackQuery, state: FSMContext
             reply_markup=ReplyKeyboardRemove()
         )
         await state.set_state(Process.writing_name)
-    # TODO если все ок, то вывести список компаний
+    # Перекидываем на аккаунт
     else:
         await state.set_state(Process.account)
 
 
-# TODO добавить проверку наличия пользователя в БД
 @router.callback_query(Process.account, F.data == (btn("hello", "0")))
 async def account(callback_query: CallbackQuery, state: FSMContext):
     await callback_query.message.answer(
@@ -144,7 +141,7 @@ async def account(callback_query: CallbackQuery, state: FSMContext):
     await state.set_state(Process.choosing_company)
 
 
-@router.callback_query(Process.choosing_company, F.data == (btn("account", "2")))
+@router.callback_query(Process.choosing_company, F.data == (btn("account", "0")))
 async def account_settings(callback_query: CallbackQuery, state: FSMContext):
     # удалить команию, добавить компанию
     # TODO сделать удаление компании из БД по кнопкам (здесь также выводить список кнопок с компаниями)
@@ -158,22 +155,15 @@ async def account_settings(callback_query: CallbackQuery, state: FSMContext):
     await state.set_state(Process.choosing_settings)
 
 
-@router.callback_query(Process.choosing_company, F.data == (btn("account", "0")))
-async def management_promotions(callback_query: CallbackQuery, state: FSMContext):
-    await callback_query.message.answer(
-        text=msg("promotions", "0"),
-        reply_markup=make_keyboard(
-            [btn("promotions_scenarios", "0"), btn("promotions_scenarios", "1"), btn("promotions_scenarios", "2")])
-    )
-    await state.set_state(Process.manage_promotions)
-
-
 @router.callback_query(Process.manage_promotions, F.data == (btn("promotions_scenarios", "0")))
 async def actual_promotions(callback_query: CallbackQuery, state: FSMContext):
+
+    # TODO закинуть все товары в акциях в БД
+    # Раз в день проходится по новым товарам в акциях и сравнивать их с товарами в БД
+    # Извлекаем по одному товару и создаем сообщение с ним с кнопкой
     await callback_query.message.answer(
-        text=msg("promotions_scenarios", "0"),
-        reply_markup=make_keyboard(
-            [btn("scenarios_1", "0"), btn("scenarios_1", "1")])
+        text="",
+        reply_markup=ReplyKeyboardRemove()
     )
     await state.set_state(Process.actual_promotions)
 
