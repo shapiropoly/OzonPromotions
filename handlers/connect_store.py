@@ -127,7 +127,7 @@ async def check_current_company(callback_query: CallbackQuery, state: FSMContext
         await state.set_state(Process.writing_name)
     # TODO если все ок, то вывести список компаний
     else:
-        await state.set_state(Process.account)
+        await account(callback_query.message, state)
 
 
 # TODO добавить проверку наличия пользователя в БД
