@@ -143,6 +143,8 @@ async def account(message: Message, state: FSMContext):
 @router.callback_query(Company.choosing_settings, F.data == (btn("account", "2")))
 async def account_settings(message: Message, state: FSMContext):
     # удалить команию, добавить компанию
+    # TODO сделать удаление компании из БД по кнопкам (здесь также выводить список кнопок с компаниями)
+    # TODO сделать добавление — проводим заново по состояниям добавления компании
     # при удалении компании, вывести список компаний в виде кнопок
     # аллерт с подтверждением
     await message.answer(
