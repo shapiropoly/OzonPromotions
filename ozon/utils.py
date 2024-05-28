@@ -17,22 +17,9 @@ class Utils:
     async def promos(self):
         endpoint = '/v1/actions'
         url = self.base_url + endpoint
-        payload = {
-            "dir": "ASC",
-            "filter": {
-                "since": "2024-01-01T00:00:00Z",
-                "to": "2024-12-31T23:59:59Z"
-            },
-            "limit": 10,
-            "offset": 0,
-            "with": {
-                "analytics_data": True,
-                "financial_data": True
-            }
-        }
 
         async with aiohttp.ClientSession(headers=self.headers) as session:
-            async with session.get(url, json=payload) as response:
+            async with session.get(url) as response:
                 if response.status == 200:
                     return await response.json()
                 else:
@@ -92,28 +79,28 @@ class Utils:
 
         return all_products
 
-    async def promos_products_activate(self, action_id, products):
-        endpoint = '/v1/actions/products/activate'
-        url = self.base_url + endpoint
-        payload = {
-            "action_id": action_id,
-            "products": products
-        }
-
-        async with aiohttp.ClientSession(headers=self.headers) as session:
-            async with session.post(url, json=payload) as response:
-                if response.status == 200:
-                    result = await response.json()
-                else:
-                    print(f"Error: {response.status}")
-                    try:
-                        error_response = await response.json()
-                        print(error_response)
-                    except aiohttp.ContentTypeError:
-                        print("Response is not JSON")
-                    return None
-
-        return result
+    # async def promos_products_activate(self, action_id, products):
+    #     endpoint = '/v1/actions/products/activate'
+    #     url = self.base_url + endpoint
+    #     payload = {
+    #         "action_id": action_id,
+    #         "products": products
+    #     }
+    #
+    #     async with aiohttp.ClientSession(headers=self.headers) as session:
+    #         async with session.post(url, json=payload) as response:
+    #             if response.status == 200:
+    #                 result = await response.json()
+    #             else:
+    #                 print(f"Error: {response.status}")
+    #                 try:
+    #                     error_response = await response.json()
+    #                     print(error_response)
+    #                 except aiohttp.ContentTypeError:
+    #                     print("Response is not JSON")
+    #                 return None
+    #
+    #     return result
 
     async def promos_products_deactivate(self, action_id, products_ids):
         endpoint = '/v1/actions/products/deactivate'
