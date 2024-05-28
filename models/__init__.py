@@ -1,4 +1,4 @@
-from .companies import Companies
+from .company import Company
 from .promotions import Promotions
 from .base import Base
 from .products import Products

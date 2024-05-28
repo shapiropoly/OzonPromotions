@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List
+from typing import List, Self
 from sqlalchemy import select, BIGINT
 from typing import TYPE_CHECKING
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from .user import User
 
 
-class Companies(Base):
+class Company(Base):
     __tablename__ = 'companies'
 
     id: Mapped[int] = mapped_column(BIGINT, primary_key=True, autoincrement=True)
@@ -29,15 +29,15 @@ class Companies(Base):
         back_populates="companies")
 
     @classmethod
-    async def get_by_name(cls, name: str, session: AsyncSession) -> List[Companies]:
+    async def get_by_id(cls, id: int, session: AsyncSession) -> Self:
         """
-        Get object by company_name
+        Get object by companies
 
-        :param name: company_name
+        :param id: id
         :param session: db session
         :return: List of Companies objects
         """
-        _ = await session.execute(select(cls).where(cls.company_name == name))
+        _ = await session.execute(select(cls).where(cls.id == id))
         return _.scalar()
 
     async def save(self, session: AsyncSession):

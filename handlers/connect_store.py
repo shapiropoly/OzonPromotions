@@ -6,7 +6,8 @@ from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
 from sqlalchemy import select
 from sqlalchemy.orm import session
 
-from models import User, Companies
+from keyboard.keyboard_account import make_keyboard_account
+from models import User, Company
 from models.db_session import session_db
 from texts.message import check_connect, account
 from keyboard.inline_keyboard import make_keyboard
@@ -96,12 +97,13 @@ async def connection(message: Message, state: FSMContext, session: AsyncSession)
 
     # TODO добавить проверку на актуальность client-id api-key
     # TODO если все ок, перебрасывать на state account, если нет запрашивать повторно
+
+    user = await User.get_user(message.from_user.id, session)
     await message.answer(
         text="Подключение прошло успешно!",
-        reply_markup=ReplyKeyboardRemove()
+        reply_markup=make_keyboard_account(user.companies)
     )
-
-    company = Companies(client_id=client_id, api_key=api_key, company_name=company_name)
+    company = Company(client_id=client_id, api_key=api_key, company_name=company_name)
     await company.save(session=session)
     await state.set_state(Company.account)
 

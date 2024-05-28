@@ -9,5 +9,5 @@ def make_keyboard(items: list[str]) -> InlineKeyboardMarkup:
         builder.add(types.InlineKeyboardButton(
             text=item,
             callback_data=f"{item}")
-        )
+        ).row(width=1)
     return builder.as_markup()

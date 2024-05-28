@@ -12,7 +12,7 @@ from .companies_to_promotions import companies_to_promotions_association_table
 from .products_to_promotions import products_to_promotions_association_table
 
 if TYPE_CHECKING:
-    from .companies import Companies
+    from .company import Company
     from .products import Products
 
 
@@ -27,7 +27,7 @@ class Promotions(Base):
     participating_products_count: Mapped[int]
     is_participating: Mapped[bool]
     discount_value: Mapped[float]
-    companies: Mapped[List[Companies]] = relationship(
+    companies: Mapped[List[Company]] = relationship(
         secondary=companies_to_promotions_association_table,
         back_populates="promotions")
     products: Mapped[List[Products]] = relationship(
@@ -35,7 +35,7 @@ class Promotions(Base):
         back_populates="promotions")
 
     @classmethod
-    async def get_by_title(cls, name: str, session: AsyncSession) -> List[Promotions]:
+    async def get_by_title(cls, name: str, session: AsyncSession) -> Self:
         """
         Get object by promo title
 

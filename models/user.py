@@ -9,7 +9,7 @@ from .users_to_company import users_to_company_association_table
 from models.db_session import Base
 
 if TYPE_CHECKING:
-    from . import Companies
+    from . import Company
 
 
 class User(Base):
@@ -19,12 +19,12 @@ class User(Base):
     telegram_id: Mapped[int] = mapped_column(BIGINT, unique=True)
     username: Mapped[str]
     name: Mapped[str]
-    companies: Mapped[List[Companies]] = relationship(
+    companies: Mapped[List[Company]] = relationship(
         secondary=users_to_company_association_table,
-        back_populates="users")
+        back_populates="users", lazy="selectin")
 
     @classmethod
-    async def get_user(cls, telegram_id: int, session: AsyncSession) -> str:
+    async def get_user(cls, telegram_id: int, session: AsyncSession) -> Self:
         """
         Get object by username
 
@@ -32,7 +32,7 @@ class User(Base):
         :param session: db session
         :return: Users object
         """
-        _= await session.execute(select(cls.name).where(cls.telegram_id == telegram_id))
+        _= await session.execute(select(cls).where(cls.telegram_id == telegram_id))
         return _.scalar()
 
     async def save(self, session: AsyncSession):

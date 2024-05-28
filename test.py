@@ -4,7 +4,7 @@ import asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.db_session import global_init, session_db, get_database_url, env
-from models import Promotions, Companies, User
+from models import Promotions, Company, User
 from utils.message import btn
 
 
@@ -15,7 +15,7 @@ async def main():
 
 @session_db
 async def create_company(session: AsyncSession):
-    company = Companies(id=524, client_id=453445, api_key="342039489328werfw43294230jdks34230", company_name="Тест")
+    company = Company(id=524, client_id=453445, api_key="342039489328werfw43294230jdks34230", company_name="Тест")
     await company.save(session=session)
 
 
