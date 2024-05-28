@@ -13,6 +13,7 @@ from texts.message import check_connect, account
 from keyboard.inline_keyboard import make_keyboard
 from utils.message import btn, msg
 from sqlalchemy.ext.asyncio import AsyncSession
+from aiogram.filters import Command
 
 router = Router()
 
@@ -29,6 +30,8 @@ class Process(StatesGroup):
     choosing_moves = State()
     connect = State()
     manage_promotions = State()
+    actual_promotions = State()
+    delete = State()
 
 
 @router.callback_query(Process.choosing_moves, F.data == (btn("hello", "0")))
@@ -158,8 +161,28 @@ async def account_settings(callback_query: CallbackQuery, state: FSMContext):
 @router.callback_query(Process.choosing_company, F.data == (btn("account", "0")))
 async def management_promotions(callback_query: CallbackQuery, state: FSMContext):
     await callback_query.message.answer(
-        text="Управление акциями",
+        text=msg("promotions", "0"),
         reply_markup=make_keyboard(
             [btn("promotions_scenarios", "0"), btn("promotions_scenarios", "1"), btn("promotions_scenarios", "2")])
     )
     await state.set_state(Process.manage_promotions)
+
+
+@router.callback_query(Process.manage_promotions, F.data == (btn("promotions_scenarios", "0")))
+async def actual_promotions(callback_query: CallbackQuery, state: FSMContext):
+    await callback_query.message.answer(
+        text=msg("promotions_scenarios", "0"),
+        reply_markup=make_keyboard(
+            [btn("scenarios_1", "0"), btn("scenarios_1", "1")])
+    )
+    await state.set_state(Process.actual_promotions)
+
+
+# @router.message(Command(commands=["1234"]))
+# async def delete(message: Message, state: FSMContext):
+#     await message.answer(
+#         text="Вы точно хотите удалить товар из акции",
+#         show_alert=True,
+#         reply_markup=make_keyboard([btn("hello", "0")])
+#     )
+#     await state.set_state(Process.delete)
