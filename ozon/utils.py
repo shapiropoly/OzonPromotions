@@ -2,6 +2,8 @@ from __future__ import print_function
 import aiohttp
 import asyncio
 
+from models import Product
+
 
 class Utils:
     def __init__(self, api_key, client_id):
@@ -156,8 +158,9 @@ class Utils:
             promos_ids.append(promo['id'])
 
         products = await self.all_promos_products(promos_ids)
-        for product in products:
-            product['name'] = (await self.product_name(product['id']))['result']['name']
+        # for product in products:
+        #     product['name'] = (await self.product_name(product['id']))['result']['name']
+
         return products
 
 

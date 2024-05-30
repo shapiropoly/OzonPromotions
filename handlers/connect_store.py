@@ -133,7 +133,12 @@ async def connection(message: Message, state: FSMContext, session: AsyncSession)
                  await checking_user_client_id(user, company))
 
     products = await util.connection()
-
+    for product in products:
+        product['name'] = (await util.product_name(product['id']))['result']['name']
+        product = Product(product_id=product['id'], name=product['name'], price=product['price'],
+                          action_price=product['action_price'])
+        company.append(product)
+    await company.save(session=session)
     await state.set_state(Process.account)
 
 
@@ -241,7 +246,6 @@ async def account_settings(callback_query: CallbackQuery, state: FSMContext):
 
 @router.callback_query(Process.manage_promotions)
 async def actual_promotions(callback_query: CallbackQuery, state: FSMContext):
-
     # TODO закинуть все товары в акциях в БД
     # Раз в день проходится по новым товарам в акциях и сравнивать их с товарами в БД
     # Извлекаем по одному товару и создаем сообщение с ним с кнопкой
@@ -250,7 +254,6 @@ async def actual_promotions(callback_query: CallbackQuery, state: FSMContext):
         reply_markup=ReplyKeyboardRemove()
     )
     await state.set_state(Process.actual_promotions)
-
 
 # @router.message(Command(commands=["1234"]))
 # async def delete(message: Message, state: FSMContext):
