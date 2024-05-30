@@ -1,17 +1,15 @@
-from aiogram import Router, F, types
+from aiogram import Router, F
 from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
 from sqlalchemy import select
-from sqlalchemy.orm import session
 
-from keyboard.keyboard_account import make_keyboard_account
 from models import User, Company
 from models.db_session import session_db
 from ozon.utils import Utils
-from texts.message import check_connect, account
 from keyboard.inline_keyboard import make_keyboard
+from utils.checking import checking_user_company
 from utils.message import btn, msg
 from sqlalchemy.ext.asyncio import AsyncSession
 from aiogram.filters import Command
@@ -42,14 +40,29 @@ async def name(callback_query: CallbackQuery, state: FSMContext, session: AsyncS
     result = await session.execute(select(User).filter(User.telegram_id == current_telegram_id))
     user = result.scalars().first()
 
-    if not user:
+    if user:
+        if user.companies:
+            # TODO проверить активность компании (т. е. апи-кей и клиент-айди должны подключаться к озону)
+            await state.set_state(Process.account)
+        else:
+            print("Вы — юзер, но компания не активна, добавьте новую компанию")
+
+            # тут проблема: нужно сделать добавление в БД юзера не в функции,
+            # где мы забираем api-key, иначе работа идет некорректно
+
+            # await callback_query.message.answer(
+            #     text=msg("registration", "1"),
+            #     reply_markup=ReplyKeyboardRemove()
+            # )
+            # await state.set_state(Process.writing_client_id)
+
+    else:
+        print("Вы — не юзер")
         await callback_query.message.answer(
             text=msg("registration", "0"),
             reply_markup=ReplyKeyboardRemove()
         )
         await state.set_state(Process.writing_name)
-    else:
-        await state.set_state(Process.check_current_company)
 
 
 @router.message(Process.writing_name)
@@ -100,34 +113,99 @@ async def connection(message: Message, state: FSMContext, session: AsyncSession)
     company_name = data.get("company_name")
 
     user = await User.get_user(message.from_user.id, session)
+
     await message.answer(
         # TODO переместить под клавиатуру (ВСЕГДА)
         text="Подключение прошло успешно!",
         reply_markup=make_keyboard([btn("hello", "0")])
     )
+
     company = Company(client_id=client_id, api_key=api_key, company_name=company_name)
+    user.companies.append(company)
     await company.save(session=session)
+
+    # вот тут мы забираем client-id и api-key
+    # TODO проверить подключение client-id api-key к озону
+    print(await checking_user_company(user, company))
+
     await state.set_state(Process.account)
 
 
-@router.callback_query(Process.check_current_company)
-@session_db
-async def check_current_company(callback_query: CallbackQuery, state: FSMContext, session: AsyncSession):
-    # TODO получить client-id api-key текущего пользователя в БД
-    current_telegram_id = callback_query.from_user.id
-    result = await session.execute(select(User).filter(User.telegram_id == current_telegram_id))
-    user = result.scalars().first()
+# async def check_current_company(callback_query: CallbackQuery, state: FSMContext, session: AsyncSession):
+#     # TODO получить client-id api-key текущего пользователя в БД
+#     current_telegram_id = callback_query.from_user.id
+#     result = await session.execute(select(User).filter(User.telegram_id == current_telegram_id))
+#     user = result.scalars().first()
+#     print(user.companies)
+#
+#     # TODO если с компанией проблемы, то вывести ошибку текущей компании
+#     if not user:
+#         await callback_query.message.answer(
+#             text=msg("registration", "0"),
+#             reply_markup=ReplyKeyboardRemove()
+#         )
+#         await state.set_state(Process.writing_name)
+#         print("Прошел вот тут")
+#     # Перекидываем на аккаунт
+#     else:
+#         await state.set_state(Process.account)
+#         print("Прошел тут")
 
-    # TODO если с компанией проблемы, то вывести ошибку текущей компании
-    if not user:
-        await callback_query.message.answer(
-            text=msg("registration", "0"),
-            reply_markup=ReplyKeyboardRemove()
-        )
-        await state.set_state(Process.writing_name)
-    # Перекидываем на аккаунт
-    else:
-        await state.set_state(Process.account)
+
+# @router.callback_query(Process.check_current_company)
+# @session_db
+# async def check_current_company(callback_query: CallbackQuery, state: FSMContext, session: AsyncSession):
+#     current_telegram_id = callback_query.from_user.id
+#     user = await User.get_user(telegram_id=current_telegram_id, session=session)
+#     print(user)
+#
+#     if user and user.companies:
+#         company = user.companies[0]
+#         client_id = company.client_id
+#         api_key = company.api_key
+#         print(f"Client ID: {client_id}, API Key: {api_key}")
+#
+#         await state.set_state(Process.account)
+#         print("Прошел тут")
+#     else:
+#         await callback_query.message.answer(
+#             text=msg("registration", "0"),
+#             reply_markup=ReplyKeyboardRemove()
+#         )
+#         await state.set_state(Process.writing_name)
+#         print("Прошел вот тут")
+
+
+# @router.callback_query(Process.check_current_company)
+# @session_db
+# async def check_current_company(callback_query: CallbackQuery, state: FSMContext, session: AsyncSession):
+#     user = await User.get_user(telegram_id=callback_query.from_user.id, session=session)
+#
+#     if user:
+#         if user.companies:
+#             company = user.companies[0]  # пользователь связан хотя бы с одной компанией
+#             client_id = company.client_id
+#             api_key = company.api_key
+#             print(f"Client ID: {client_id}, API Key: {api_key}")
+#
+#             await state.set_state(Process.account)
+#             print("Прошел тут 1")
+#         else:
+#             print("No companies associated with user")
+#             await callback_query.message.answer(
+#                 text=msg("registration", "0"),
+#                 reply_markup=ReplyKeyboardRemove()
+#             )
+#             await state.set_state(Process.writing_name)
+#             print("Прошел вот тут 1")
+#     else:
+#         print("User not found")
+#         await callback_query.message.answer(
+#             text=msg("registration", "0"),
+#             reply_markup=ReplyKeyboardRemove()
+#         )
+#         await state.set_state(Process.writing_name)
+#         print("Прошел вот тут 2")
 
 
 @router.callback_query(Process.account, F.data == (btn("hello", "0")))
@@ -155,7 +233,7 @@ async def account_settings(callback_query: CallbackQuery, state: FSMContext):
     await state.set_state(Process.choosing_settings)
 
 
-@router.callback_query(Process.manage_promotions, F.data == (btn("promotions_scenarios", "0")))
+@router.callback_query(Process.manage_promotions)
 async def actual_promotions(callback_query: CallbackQuery, state: FSMContext):
 
     # TODO закинуть все товары в акциях в БД
