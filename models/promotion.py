@@ -8,8 +8,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from models.db_session import Base
-from .companies_to_promotions import companies_to_promotions_association_table
-from .products_to_promotions import products_to_promotions_association_table
 
 if TYPE_CHECKING:
     from .company import Company
@@ -27,12 +25,6 @@ class Promotion(Base):
     participating_products_count: Mapped[int]
     is_participating: Mapped[bool]
     discount_value: Mapped[float]
-    companies: Mapped[List[Company]] = relationship(
-        secondary=companies_to_promotions_association_table,
-        back_populates="promotions")
-    products: Mapped[List[Product]] = relationship(
-        secondary=products_to_promotions_association_table,
-        back_populates="promotions")
 
     @classmethod
     async def get_by_title(cls, name: str, session: AsyncSession) -> Self:

@@ -3,23 +3,39 @@ from datetime import date
 import asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from models.db_session import global_init, session_db, create_session
-from models import Promotion, Company, User
+from models.db_session import global_init, session_db, create_session, get_database_url
+from models import Promotion, Company, User, Product
 
 
 async def main():
     await global_init()
     async with create_session() as session:
-        user = await User.get_user(telegram_id=5454, session=session)
-        company1 = Company(client_id=11, api_key="1_1", company_name="Company_1_1")
-        company2 = Company(client_id=22, api_key="2_2", company_name="Company_1_1")
 
-        # Добавление компаний к пользователю
-        user.companies.append(company1)
-        user.companies.append(company2)
+        # company1 = Company.get_by_id(client_id=74392)
+        company3 = Company(client_id=123, api_key="3323982dhjf", company_name="name")
 
-        await user.save(session=session)
-        await session.commit()
+        product = Product(product_id=5454, name="name_1", price=1500, action_price=1000)
+
+        company3.products.append(product)
+
+        await company3.save(session=session)
+        # await user1.save(session=session)
+        await product.save(session=session)
+        # await session.commit()
+
+
+
+
+        # user = await User.get_user(telegram_id=5454, session=session)
+        # company1 = Company(client_id=11, api_key="1_1", company_name="Company_1_1")
+        # company2 = Company(client_id=22, api_key="2_2", company_name="Company_1_1")
+        #
+        # # Добавление компаний к пользователю
+        # user.companies.append(company1)
+        # user.companies.append(company2)
+        #
+        # await user.save(session=session)
+        # await session.commit()
 
     # # oper = OperationName(supplier_oper_name="hello", add_to_other_payments=False)
         # user1 = User(telegram_id=111, username="username_1", name="name_1")
@@ -38,13 +54,10 @@ async def main():
     # await create_company()
 
 
-
-
 # async def main():
-#
 #     await global_init()
-#     # await create_user()
-#     await add_user_with_company()
+#     await create_user()
+#     # await add_user_with_company()
 
 
 @session_db
@@ -55,8 +68,8 @@ async def create_company(session: AsyncSession):
 
 @session_db
 async def create_user(session: AsyncSession):
-    user = User(telegram_id=122322, username="test_username_6", name="name_6")
-    await user.save(session=session)
+    user1 = User(telegram_id=23233, username="username", name="name")
+    await user1.save(session=session)
 
 
 @session_db

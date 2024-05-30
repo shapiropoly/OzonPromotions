@@ -5,10 +5,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from models.db_session import Base
 from .users_to_company import users_to_companies_association_table
-from .companies_to_promotions import companies_to_promotions_association_table
+from .products_to_companies import products_to_companies_association_table
 
 if TYPE_CHECKING:
-    from .promotion import Promotion
+    from .product import Product
     from .user import User
 
 
@@ -19,9 +19,11 @@ class Company(Base):
     client_id: Mapped[int]
     api_key: Mapped[str]
     company_name: Mapped[str]
-    promotions: Mapped[List[Promotion]] = relationship(
-        secondary=companies_to_promotions_association_table,
-        back_populates="companies"
+    products: Mapped[List[Product]] = relationship(
+        secondary=products_to_companies_association_table,
+        back_populates="companies",
+        lazy="selectin",
+        cascade="all, delete"
     )
     users: Mapped[List[User]] = relationship(
         secondary=users_to_companies_association_table,
@@ -31,8 +33,8 @@ class Company(Base):
     )
 
     @classmethod
-    async def get_by_id(cls, id: int, session: AsyncSession) -> Self:
-        _ = await session.execute(select(cls).where(cls.id == id))
+    async def get_by_client_id(cls, client_id: int, session: AsyncSession) -> Self:
+        _ = await session.execute(select(cls).where(cls.client_id == client_id))
         return _.scalar()
 
     async def save(self, session: AsyncSession):

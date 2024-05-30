@@ -7,27 +7,26 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from models.db_session import Base
-from .products_to_promotions import products_to_promotions_association_table
+from .products_to_companies import products_to_companies_association_table
 
 if TYPE_CHECKING:
-    from . import Promotion
+    from . import Company
 
 
 class Product(Base):
     __tablename__ = 'products'
 
     id: Mapped[int] = mapped_column(BIGINT, autoincrement=True, primary_key=True)
-    company_id: Mapped[int] = mapped_column(BIGINT, unique=True)
     product_id: Mapped[int]
     name: Mapped[str]
-    specifications: Mapped[str]
     price: Mapped[int]
     action_price: Mapped[int]
-    count: Mapped[int]
-    check_active_promo: Mapped[bool]
-    promotions: Mapped[List[Promotion]] = relationship(
-        secondary=products_to_promotions_association_table,
-        back_populates="products")
+    companies: Mapped[List[Company]] = relationship(
+        secondary=products_to_companies_association_table,
+        back_populates="products",
+        lazy="selectin",
+        cascade="all, delete"
+    )
 
     @classmethod
     async def get_items(cls, name: str, session: AsyncSession) -> Self:

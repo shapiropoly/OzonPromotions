@@ -124,20 +124,20 @@ async def connection(message: Message, state: FSMContext, session: AsyncSession)
 
     company = Company(client_id=client_id, api_key=api_key, company_name=company_name)
     user.companies.append(company)
-    await company.save(session=session)
 
-    # вот тут мы забираем client-id и api-key
     # TODO проверить подключение client-id api-key к озону
-    # print(await checking_user_company(user, company))
     util = Utils(await checking_user_api_key(user, company),
                  await checking_user_client_id(user, company))
 
     products = await util.connection()
     for product in products:
         product['name'] = (await util.product_name(product['id']))['result']['name']
-        product = Product(product_id=product['id'], name=product['name'], price=product['price'],
-                          action_price=product['action_price'])
-        company.append(product)
+        product_instance = Product(product_id=product['id'], name=product['name'], price=product['price'],
+                                   action_price=product['action_price'])
+        company.products.append(product_instance)
+        await product_instance.save(session=session)
+
+
     await company.save(session=session)
     await state.set_state(Process.account)
 

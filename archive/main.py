@@ -4,7 +4,7 @@ import sqlalchemy as db
 import psycopg2
 from sqlalchemy.sql import select
 
-from models.companies_to_promotions import companies_to_promo_association_table
+from models.products_to_companies import companies_to_promo_association_table
 
 URL_DATABASE = "postgresql://localhost:5432/postgres"
 
