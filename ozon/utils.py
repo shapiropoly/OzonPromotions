@@ -35,9 +35,7 @@ class Utils:
         endpoint = '/v1/actions/candidates'
         url = self.base_url + endpoint
         payload = {
-            "action_id": action_id,
-            "limit": 10,
-            "offset": 0
+            "action_id": action_id
         }
 
         async with aiohttp.ClientSession(headers=self.headers) as session:
@@ -59,9 +57,7 @@ class Utils:
         endpoint = '/v1/actions/products'
         url = self.base_url + endpoint
         payload = {
-            "action_id": action_id,
-            "limit": 10,
-            "offset": 0
+            "action_id": action_id
         }
 
         async with aiohttp.ClientSession(headers=self.headers) as session:
@@ -83,6 +79,28 @@ class Utils:
         all_products = []
         for action_id in action_ids:
             all_products.extend((await self.promos_products(action_id))['result']['products'])
+        return all_products
+
+    async def product_name(self, product_id):
+        endpoint = '/v2/product/info'
+        url = self.base_url + endpoint
+        payload = {
+            "product_id": product_id
+        }
+
+        async with aiohttp.ClientSession(headers=self.headers) as session:
+            async with session.post(url, json=payload) as response:
+                if response.status == 200:
+                    all_products = await response.json()
+                else:
+                    print(f"Error: {response.status}")
+                    try:
+                        error_response = await response.json()
+                        print(error_response)
+                    except aiohttp.ContentTypeError:
+                        print("Response is not JSON")
+                    return None
+
         return all_products
 
     # async def promos_products_activate(self, action_id, products):
@@ -138,6 +156,8 @@ class Utils:
             promos_ids.append(promo['id'])
 
         products = await self.all_promos_products(promos_ids)
+        for product in products:
+            product['name'] = (await self.product_name(product['id']))['result']['name']
         return products
 
 
