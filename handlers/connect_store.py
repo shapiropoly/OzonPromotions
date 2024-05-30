@@ -1,3 +1,5 @@
+import asyncio
+
 from aiogram import Router, F
 from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
@@ -9,7 +11,7 @@ from models import User, Company
 from models.db_session import session_db
 from ozon.utils import Utils
 from keyboard.inline_keyboard import make_keyboard
-from utils.checking import checking_user_company
+from utils.checking import checking_user_company, checking_user_client_id, checking_user_api_key
 from utils.message import btn, msg
 from sqlalchemy.ext.asyncio import AsyncSession
 from aiogram.filters import Command
@@ -126,7 +128,9 @@ async def connection(message: Message, state: FSMContext, session: AsyncSession)
 
     # вот тут мы забираем client-id и api-key
     # TODO проверить подключение client-id api-key к озону
-    print(await checking_user_company(user, company))
+    # print(await checking_user_company(user, company))
+    util = Utils(await checking_user_api_key(user, company), await checking_user_client_id(user, company))
+    products = await util.connection()
 
     await state.set_state(Process.account)
 

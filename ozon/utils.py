@@ -79,6 +79,12 @@ class Utils:
 
         return all_products
 
+    async def all_promos_products(self, action_ids):
+        all_products = []
+        for action_id in action_ids:
+            all_products.extend((await self.promos_products(action_id))['result']['products'])
+        return all_products
+
     # async def promos_products_activate(self, action_id, products):
     #     endpoint = '/v1/actions/products/activate'
     #     url = self.base_url + endpoint
@@ -127,20 +133,13 @@ class Utils:
 
     async def connection(self):
         promos = await self.promos()
-        if promos:
-            print("Акции:")
-            print(promos)
+        promos_ids = []
+        for promo in promos['result']:
+            promos_ids.append(promo['id'])
 
-        action_id = '1177179'  # Укажите здесь нужный action_id
-        candidates = await self.promos_candidates(action_id)
-        if candidates:
-            print("Кандидаты:")
-            print(candidates)
-
-        products = await self.promos_products(action_id)
-        if products:
-            print("Товары в акциях:")
-            print(products)
+        products = await self.all_promos_products(promos_ids)
+        print(products)
+        return products
 
 
 def main():
