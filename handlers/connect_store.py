@@ -7,7 +7,7 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
 from sqlalchemy import select
 
-from models import User, Company
+from models import User, Company, Product
 from models.db_session import session_db
 from ozon.utils import Utils
 from keyboard.inline_keyboard import make_keyboard
@@ -129,7 +129,9 @@ async def connection(message: Message, state: FSMContext, session: AsyncSession)
     # вот тут мы забираем client-id и api-key
     # TODO проверить подключение client-id api-key к озону
     # print(await checking_user_company(user, company))
-    util = Utils(await checking_user_api_key(user, company), await checking_user_client_id(user, company))
+    util = Utils(await checking_user_api_key(user, company),
+                 await checking_user_client_id(user, company))
+
     products = await util.connection()
 
     await state.set_state(Process.account)
