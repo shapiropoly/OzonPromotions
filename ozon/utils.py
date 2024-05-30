@@ -158,7 +158,6 @@ class Utils:
         products = await self.all_promos_products(promos_ids)
         for product in products:
             product['name'] = (await self.product_name(product['id']))['result']['name']
-        print(product)
         return products
 
 
