@@ -3,14 +3,48 @@ from datetime import date
 import asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from models.db_session import global_init, session_db, get_database_url, env
-from models import Promotions, Company, User
-from utils.message import btn
+from models.db_session import global_init, session_db, create_session
+from models import Promotion, Company, User
 
 
 async def main():
     await global_init()
-    await create_user()
+    async with create_session() as session:
+        user = await User.get_user(telegram_id=5454, session=session)
+        company1 = Company(client_id=11, api_key="1_1", company_name="Company_1_1")
+        company2 = Company(client_id=22, api_key="2_2", company_name="Company_1_1")
+
+        # Добавление компаний к пользователю
+        user.companies.append(company1)
+        user.companies.append(company2)
+
+        await user.save(session=session)
+        await session.commit()
+
+    # # oper = OperationName(supplier_oper_name="hello", add_to_other_payments=False)
+        # user1 = User(telegram_id=111, username="username_1", name="name_1")
+        # user2 = User(telegram_id=222, username="username_2", name="name_2")
+        # cmpny1 = Company(client_id=123, api_key="342", company_name="company_1")
+        # cmpny2 = Company(client_id=234, api_key="765", company_name="company_2")
+        #
+        # user1.companies = [cmpny1, cmpny2]
+        # user2.companies = [cmpny2]
+        #
+        # await user1.save(session=session)
+        # await user2.save(session=session)
+        # await cmpny1.save(session=session)
+        # await cmpny2.save(session=session)
+    # await create_operation_name()
+    # await create_company()
+
+
+
+
+# async def main():
+#
+#     await global_init()
+#     # await create_user()
+#     await add_user_with_company()
 
 
 @session_db
@@ -27,7 +61,7 @@ async def create_user(session: AsyncSession):
 
 @session_db
 async def create_promo(session: AsyncSession):
-    promotion = Promotions(
+    promotion = Promotion(
         id=434328,
         title="Распродажа 24.04",
         date_start=date(year=2024, month=4, day=24),
@@ -42,3 +76,4 @@ async def create_promo(session: AsyncSession):
 if __name__ == "__main__":
     # print(get_database_url(alembic=False))
     asyncio.run(main())
+
