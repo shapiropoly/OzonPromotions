@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from .products import Products
 
 
-class Promotions(Base):
+class Promotion(Base):
     __tablename__ = 'promotions'
 
     id: Mapped[int] = mapped_column(BIGINT, primary_key=True, autoincrement=True)

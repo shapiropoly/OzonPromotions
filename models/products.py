@@ -10,7 +10,7 @@ from models.db_session import Base
 from .products_to_promotions import products_to_promotions_association_table
 
 if TYPE_CHECKING:
-    from . import Promotions
+    from . import Promotion
 
 
 class Products(Base):
@@ -25,7 +25,7 @@ class Products(Base):
     action_price: Mapped[int]
     count: Mapped[int]
     check_active_promo: Mapped[bool]
-    promotions: Mapped[List[Promotions]] = relationship(
+    promotions: Mapped[List[Promotion]] = relationship(
         secondary=products_to_promotions_association_table,
         back_populates="products")
 

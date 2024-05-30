@@ -1,16 +1,14 @@
 from __future__ import annotations
-
-from typing import List, Self
+from typing import List, Self, TYPE_CHECKING
 from sqlalchemy import select, BIGINT
-from typing import TYPE_CHECKING
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from models.db_session import Base
+from .users_to_company import users_to_companies_association_table
 from .companies_to_promotions import companies_to_promotions_association_table
-from .users_to_company import users_to_company_association_table
 
 if TYPE_CHECKING:
-    from .promotions import Promotions
+    from .promotion import Promotion
     from .user import User
 
 
@@ -21,22 +19,19 @@ class Company(Base):
     client_id: Mapped[int]
     api_key: Mapped[str]
     company_name: Mapped[str]
-    promotions: Mapped[List[Promotions]] = relationship(
+    promotions: Mapped[List[Promotion]] = relationship(
         secondary=companies_to_promotions_association_table,
-        back_populates="companies")
+        back_populates="companies"
+    )
     users: Mapped[List[User]] = relationship(
-        secondary=users_to_company_association_table,
-        back_populates="companies")
+        secondary=users_to_companies_association_table,
+        back_populates="companies",
+        lazy="selectin",
+        cascade="all, delete"
+    )
 
     @classmethod
     async def get_by_id(cls, id: int, session: AsyncSession) -> Self:
-        """
-        Get object by companies
-
-        :param id: id
-        :param session: db session
-        :return: List of Companies objects
-        """
         _ = await session.execute(select(cls).where(cls.id == id))
         return _.scalar()
 
