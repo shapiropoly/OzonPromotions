@@ -13,7 +13,7 @@ from .products_to_promotions import products_to_promotions_association_table
 
 if TYPE_CHECKING:
     from .company import Company
-    from .products import Products
+    from .product import Product
 
 
 class Promotion(Base):
@@ -30,7 +30,7 @@ class Promotion(Base):
     companies: Mapped[List[Company]] = relationship(
         secondary=companies_to_promotions_association_table,
         back_populates="promotions")
-    products: Mapped[List[Products]] = relationship(
+    products: Mapped[List[Product]] = relationship(
         secondary=products_to_promotions_association_table,
         back_populates="promotions")
 
