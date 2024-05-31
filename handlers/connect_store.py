@@ -108,27 +108,28 @@ async def company_name(message: Message, state: FSMContext):
 @router.message(Process.writing_company_name)
 @session_db
 async def connection(message: Message, state: FSMContext, session: AsyncSession):
+    # Отправка сообщения "Загрузка"
+    loading_message = await message.answer(text="Загрузка...")
+
+    # Обновление данных состояния
     await state.update_data(company_name=message.text)
     data = await state.get_data()
     client_id = data.get("client_id")
     api_key = data.get("api_key")
     company_name = data.get("company_name")
 
+    # Получение пользователя
     user = await User.get_user(message.from_user.id, session)
 
-    await message.answer(
-        # TODO переместить под клавиатуру (ВСЕГДА)
-        text="Подключение прошло успешно!",
-        reply_markup=make_keyboard([btn("hello", "0")])
-    )
-
+    # Создание и добавление компании
     company = Company(client_id=client_id, api_key=api_key, company_name=company_name)
     user.companies.append(company)
 
-    # TODO проверить подключение client-id api-key к озону
+    # Проверка подключения client_id и api_key к озону
     util = Utils(await checking_user_api_key(user, company),
                  await checking_user_client_id(user, company))
 
+    # Получение и сохранение продуктов
     products = await util.connection()
     for product in products:
         product['name'] = (await util.product_name(product['id']))['result']['name']
@@ -137,9 +138,14 @@ async def connection(message: Message, state: FSMContext, session: AsyncSession)
         company.products.append(product_instance)
         await product_instance.save(session=session)
 
-
     await company.save(session=session)
+
+    # Установка нового состояния
     await state.set_state(Process.account)
+
+    # Обновление сообщения
+    await loading_message.edit_text(text="Подключение прошло успешно!",
+                                    reply_markup=make_keyboard([btn("hello", "0")]))
 
 
 # async def check_current_company(callback_query: CallbackQuery, state: FSMContext, session: AsyncSession):
