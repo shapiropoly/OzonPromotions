@@ -7,6 +7,7 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
 from sqlalchemy import select
 
+from data.config import bot
 from models import User, Company, Product
 from models.db_session import session_db
 from ozon.utils import Utils
@@ -33,6 +34,21 @@ class Process(StatesGroup):
     manage_promotions = State()
     actual_promotions = State()
     delete = State()
+
+
+@session_db
+async def send_daily_message(session: AsyncSession):
+    # Получение пользователей из базы данных и отправка им сообщения
+    users = await session.execute(select(User))
+    for user in users.scalars():
+        try:
+            await bot.send_message(
+                chat_id=user.telegram_id,
+                text="Ежедневное сообщение",
+                reply_markup=make_keyboard([btn("hello", "0")])
+            )
+        except Exception as e:
+            print(f"Failed to send message to {user.telegram_id}: {e}")
 
 
 @router.callback_query(Process.choosing_moves, F.data == (btn("hello", "0")))
