@@ -39,22 +39,22 @@ class Process(StatesGroup):
 @session_db
 async def send_daily_message(session: AsyncSession):
     # Получение пользователей из базы данных и отправка им сообщения
-    users = await session.execute(select(User))
-    for user in users.scalars():
-        try:
-            await bot.send_message(
-                chat_id=user.telegram_id,
-                text="Ежедневное сообщение",
-                reply_markup=make_keyboard([btn("hello", "0")])
-            )
-        except Exception as e:
-            print(f"Failed to send message to {user.telegram_id}: {e}")
+        users = await session.execute(select(User))
+        for user in users.scalars():
+            try:
+                await bot.send_message(
+                    chat_id=user.telegram_id,
+                    text="Ежедневное сообщение",
+                    reply_markup=make_keyboard([btn("hello", "0")])
+                )
+            except Exception as e:
+                print(f"Failed to send message to {user.telegram_id}: {e}")
 
 
-@router.callback_query(Process.choosing_moves, F.data == (btn("hello", "0")))
+@router.message(Process.choosing_moves, F.text == (btn("hello", "0")))
 @session_db
-async def name(callback_query: CallbackQuery, state: FSMContext, session: AsyncSession):
-    current_telegram_id = callback_query.from_user.id
+async def name(message: Message, state: FSMContext, session: AsyncSession):
+    current_telegram_id = message.from_user.id
     result = await session.execute(select(User).filter(User.telegram_id == current_telegram_id))
     user = result.scalars().first()
 
@@ -76,7 +76,7 @@ async def name(callback_query: CallbackQuery, state: FSMContext, session: AsyncS
 
     else:
         print("Вы — не юзер")
-        await callback_query.message.answer(
+        await message.answer(
             text=msg("registration", "0"),
             reply_markup=ReplyKeyboardRemove()
         )

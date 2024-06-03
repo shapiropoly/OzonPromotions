@@ -1,4 +1,4 @@
-from aiogram import F, Router
+from aiogram import F, Router, types
 from aiogram.filters import Command
 from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
@@ -21,7 +21,7 @@ async def cmd_start(message: Message, state: FSMContext):
     )
     await message.answer(
         text=msg("system", "0"),
-        reply_markup=make_keyboard([btn("hello", "0")])
+        reply_markup=types.ReplyKeyboardMarkup(keyboard=[[types.KeyboardButton(text=btn("hello", "0"))]])
     )
     await state.set_state(Process.choosing_moves)
 
