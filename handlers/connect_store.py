@@ -258,7 +258,7 @@ async def account(message: Message, state: FSMContext):
     await state.set_state(Process.choosing_company)
 
 
-@router.callback_query(Process.choosing_company, F.data == (btn("account", "0")))
+@router.callback_query(Process.choosing_company, F.data == (btn("account", "2")))
 async def account_settings(callback_query: CallbackQuery, state: FSMContext):
     # удалить команию, добавить компанию
     # TODO сделать удаление компании из БД по кнопкам (здесь также выводить список кнопок с компаниями)
