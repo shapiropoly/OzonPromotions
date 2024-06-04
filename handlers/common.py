@@ -6,6 +6,7 @@ from aiogram.fsm.state import default_state
 from aiogram.types import Message, ReplyKeyboardRemove
 
 from handlers.connect_store import Process
+from keyboard.account_keyboard import keyboard
 from keyboard.inline_keyboard import make_keyboard
 from utils.message import msg, btn
 
@@ -17,11 +18,11 @@ async def cmd_start(message: Message, state: FSMContext):
     await state.clear()
     await message.answer(
         text=msg("hello", "0"),
-        reply_markup=ReplyKeyboardRemove()
+        reply_markup=keyboard
     )
     await message.answer(
         text=msg("system", "0"),
-        reply_markup=types.ReplyKeyboardMarkup(keyboard=[[types.KeyboardButton(text=btn("hello", "0"))]])
+        reply_markup=keyboard
     )
     await state.set_state(Process.choosing_moves)
 

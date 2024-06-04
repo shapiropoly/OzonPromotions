@@ -1,6 +1,6 @@
 import asyncio
 
-from aiogram import Router, F
+from aiogram import Router, F, types
 from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
@@ -8,6 +8,7 @@ from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
 from sqlalchemy import select
 
 from data.config import bot
+from keyboard.account_keyboard import keyboard
 from models import User, Company, Product
 from models.db_session import session_db
 from ozon.utils import Utils
@@ -39,16 +40,16 @@ class Process(StatesGroup):
 @session_db
 async def send_daily_message(session: AsyncSession):
     # Получение пользователей из базы данных и отправка им сообщения
-        users = await session.execute(select(User))
-        for user in users.scalars():
-            try:
-                await bot.send_message(
-                    chat_id=user.telegram_id,
-                    text="Ежедневное сообщение",
-                    reply_markup=make_keyboard([btn("hello", "0")])
-                )
-            except Exception as e:
-                print(f"Failed to send message to {user.telegram_id}: {e}")
+    users = await session.execute(select(User))
+    for user in users.scalars():
+        try:
+            await bot.send_message(
+                chat_id=user.telegram_id,
+                text="Ежедневное сообщение",
+                reply_markup=keyboard
+            )
+        except Exception as e:
+            print(f"Failed to send message to {user.telegram_id}: {e}")
 
 
 @router.message(Process.choosing_moves, F.text == (btn("hello", "0")))
@@ -78,7 +79,7 @@ async def name(message: Message, state: FSMContext, session: AsyncSession):
         print("Вы — не юзер")
         await message.answer(
             text=msg("registration", "0"),
-            reply_markup=ReplyKeyboardRemove()
+            reply_markup=keyboard
         )
         await state.set_state(Process.writing_name)
 
@@ -88,7 +89,7 @@ async def client_id(message: Message, state: FSMContext):
     await state.update_data(name=message.text)
     await message.answer(
         text=msg("registration", "1"),
-        reply_markup=ReplyKeyboardRemove()
+        reply_markup=keyboard
     )
     await state.set_state(Process.writing_client_id)
 
@@ -102,7 +103,7 @@ async def api_key(message: Message, state: FSMContext, session: AsyncSession):
 
     await message.answer(
         text=msg("registration", "2"),
-        reply_markup=ReplyKeyboardRemove()
+        reply_markup=keyboard
     )
 
     user = User(name=name, telegram_id=message.from_user.id, username=message.from_user.username)
@@ -116,7 +117,7 @@ async def company_name(message: Message, state: FSMContext):
     await state.update_data(api_key=message.text)
     await message.answer(
         text=msg("registration", "3"),
-        reply_markup=ReplyKeyboardRemove()
+        reply_markup=keyboard
     )
     await state.set_state(Process.writing_company_name)
 
@@ -159,9 +160,14 @@ async def connection(message: Message, state: FSMContext, session: AsyncSession)
     # Установка нового состояния
     await state.set_state(Process.account)
 
-    # Обновление сообщения
-    await loading_message.edit_text(text="Подключение прошло успешно!",
-                                    reply_markup=make_keyboard([btn("hello", "0")]))
+    await loading_message.delete()
+
+    await message.answer(text="Подключение прошло успешно!",
+                         reply_markup=keyboard)
+
+    # # Обновление сообщения
+    # await loading_message.edit_reply_markup(text="Подключение прошло успешно!",
+    #                                         reply_markup=keyboard)
 
 
 # async def check_current_company(callback_query: CallbackQuery, state: FSMContext, session: AsyncSession):
@@ -241,9 +247,9 @@ async def connection(message: Message, state: FSMContext, session: AsyncSession)
 #         print("Прошел вот тут 2")
 
 
-@router.callback_query(Process.account, F.data == (btn("hello", "0")))
-async def account(callback_query: CallbackQuery, state: FSMContext):
-    await callback_query.message.answer(
+@router.message(Process.account, F.text == (btn("hello", "0")))
+async def account(message: Message, state: FSMContext):
+    await message.answer(
         text=msg("account", "0"),
         # TODO сделать кнопки компаний юзера из бд
         reply_markup=make_keyboard([btn("account", "0"), btn("account", "1"), btn("account", "2")])
@@ -261,9 +267,9 @@ async def account_settings(callback_query: CallbackQuery, state: FSMContext):
     # аллерт с подтверждением
     await callback_query.message.answer(
         text="Настройки аккаунта будут доступны здесь",
-        reply_markup=ReplyKeyboardRemove()
+        reply_markup=keyboard
     )
-    await state.set_state(Process.choosing_settings)
+    await state.set_state(Process.account)
 
 
 @router.callback_query(Process.manage_promotions)
@@ -273,7 +279,7 @@ async def actual_promotions(callback_query: CallbackQuery, state: FSMContext):
     # Извлекаем по одному товару и создаем сообщение с ним с кнопкой
     await callback_query.message.answer(
         text="",
-        reply_markup=ReplyKeyboardRemove()
+        reply_markup=keyboard
     )
     await state.set_state(Process.actual_promotions)
 
