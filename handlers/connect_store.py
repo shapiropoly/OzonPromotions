@@ -42,6 +42,8 @@ class Process(StatesGroup):
 async def send_daily_message(user_id: int):
     try:
         while True:
+            # TODO вызываем функцию db_compare_products,
+            #  вызываем функцию db_add_products и отправляем сообщения с новыми товарами
             await bot.send_message(chat_id=user_id, text="Ежедневное сообщение")
             #  тут, ниже, время указывается в секундах
             await asyncio.sleep(86400)
@@ -147,6 +149,7 @@ async def db_add_products(session, util, company, products):
 async def db_compare_products(util, products):
     for product in products:
         product['name'] = (await util.product_name(product['id']))['result']['name']
+        # TODO добавить сравнение передаваемых товаров с товарами а БД
 
 
 @router.message(Process.writing_company_name)
