@@ -135,13 +135,18 @@ async def company_name(message: Message, state: FSMContext):
     await state.set_state(Process.writing_company_name)
 
 
-async def db(session, util, company, products):
+async def db_add_products(session, util, company, products):
     for product in products:
         product['name'] = (await util.product_name(product['id']))['result']['name']
         product_instance = Product(product_id=product['id'], name=product['name'], price=product['price'],
                                    action_price=product['action_price'])
         company.products.append(product_instance)
         await product_instance.save(session=session)
+
+
+async def db_compare_products(util, products):
+    for product in products:
+        product['name'] = (await util.product_name(product['id']))['result']['name']
 
 
 @router.message(Process.writing_company_name)
@@ -171,7 +176,7 @@ async def connection(message: Message, state: FSMContext, session: AsyncSession)
     # Получение и сохранение продуктов
     products = await util.connection()
 
-    await db(session, util, company, products)
+    await db_add_products(session, util, company, products)
     # for product in products:
     #     product['name'] = (await util.product_name(product['id']))['result']['name']
     #     product_instance = Product(product_id=product['id'], name=product['name'], price=product['price'],
