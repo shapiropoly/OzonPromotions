@@ -21,9 +21,9 @@ async def main():
     dp = Dispatcher(storage=MemoryStorage())
 
     dp.include_routers(common.router, connect_store.router)
-    scheduler = AsyncIOScheduler()
-    scheduler.add_job(send_daily_message, CronTrigger(hour=14, minute=52))
-    scheduler.start()
+    # scheduler = AsyncIOScheduler()
+    # scheduler.add_job(send_daily_message, CronTrigger(hour=14, minute=52))
+    # scheduler.start()
 
     await dp.start_polling(bot)
 

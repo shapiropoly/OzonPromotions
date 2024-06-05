@@ -22,6 +22,7 @@ router = Router()
 
 
 class Process(StatesGroup):
+    daily_message = State()
     writing_name = State()
     writing_client_id = State()
     writing_api_key = State()
@@ -37,19 +38,29 @@ class Process(StatesGroup):
     delete = State()
 
 
-@session_db
-async def send_daily_message(session: AsyncSession):
-    # Получение пользователей из базы данных и отправка им сообщения
-    users = await session.execute(select(User))
-    for user in users.scalars():
-        try:
-            await bot.send_message(
-                chat_id=user.telegram_id,
-                text="Ежедневное сообщение",
-                reply_markup=keyboard
-            )
-        except Exception as e:
-            print(f"Failed to send message to {user.telegram_id}: {e}")
+@router.message(Process.daily_message)
+async def send_daily_message(user_id: int):
+    try:
+        while True:
+            await bot.send_message(chat_id=user_id, text="Ежедневное сообщение")
+            #  тут, ниже, время указывается в секундах
+            await asyncio.sleep(86400)
+    except Exception as e:
+            print(f"Failed to send message to {user_id}: {e}")
+
+# @session_db
+# async def send_daily_message(session: AsyncSession):
+#     # Получение пользователей из базы данных и отправка им сообщения
+#     users = await session.execute(select(User))
+#     for user in users.scalars():
+#         try:
+#             await bot.send_message(
+#                 chat_id=user.telegram_id,
+#                 text="Ежедневное сообщение",
+#                 reply_markup=keyboard
+#             )
+#         except Exception as e:
+#             print(f"Failed to send message to {user.telegram_id}: {e}")
 
 
 @router.message(Process.choosing_moves, F.text == (btn("hello", "0")))
@@ -110,6 +121,7 @@ async def api_key(message: Message, state: FSMContext, session: AsyncSession):
     await user.save(session=session)
 
     await state.set_state(Process.writing_api_key)
+    asyncio.create_task(send_daily_message(user_id=message.from_user.id))
 
 
 @router.message(Process.writing_api_key)
