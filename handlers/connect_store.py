@@ -122,7 +122,7 @@ async def api_key(message: Message, state: FSMContext, session: AsyncSession):
     await user.save(session=session)
 
     await state.set_state(Process.writing_api_key)
-    asyncio.create_task(send_daily_message(user_id=message.from_user.id))
+    await asyncio.create_task(send_daily_message(user_id=message.from_user.id))
 
 
 @router.message(Process.writing_api_key)
