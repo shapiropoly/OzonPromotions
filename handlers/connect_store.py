@@ -46,7 +46,8 @@ async def send_daily_message(user_id: int):
             #  тут, ниже, время указывается в секундах
             await asyncio.sleep(86400)
     except Exception as e:
-            print(f"Failed to send message to {user_id}: {e}")
+        print(f"Failed to send message to {user_id}: {e}")
+
 
 # @session_db
 # async def send_daily_message(session: AsyncSession):
@@ -134,6 +135,15 @@ async def company_name(message: Message, state: FSMContext):
     await state.set_state(Process.writing_company_name)
 
 
+async def db(session, util, company, products):
+    for product in products:
+        product['name'] = (await util.product_name(product['id']))['result']['name']
+        product_instance = Product(product_id=product['id'], name=product['name'], price=product['price'],
+                                   action_price=product['action_price'])
+        company.products.append(product_instance)
+        await product_instance.save(session=session)
+
+
 @router.message(Process.writing_company_name)
 @session_db
 async def connection(message: Message, state: FSMContext, session: AsyncSession):
@@ -160,12 +170,14 @@ async def connection(message: Message, state: FSMContext, session: AsyncSession)
 
     # Получение и сохранение продуктов
     products = await util.connection()
-    for product in products:
-        product['name'] = (await util.product_name(product['id']))['result']['name']
-        product_instance = Product(product_id=product['id'], name=product['name'], price=product['price'],
-                                   action_price=product['action_price'])
-        company.products.append(product_instance)
-        await product_instance.save(session=session)
+
+    await db(session, util, company, products)
+    # for product in products:
+    #     product['name'] = (await util.product_name(product['id']))['result']['name']
+    #     product_instance = Product(product_id=product['id'], name=product['name'], price=product['price'],
+    #                                action_price=product['action_price'])
+    #     company.products.append(product_instance)
+    #     await product_instance.save(session=session)
 
     await company.save(session=session)
 
