@@ -38,12 +38,22 @@ class Process(StatesGroup):
     delete = State()
 
 
-@router.message(Process.daily_message)
-async def send_daily_message(user_id: int):
+# @router.message(Process.daily_message)
+# @session_db
+async def send_daily_message(message, session, user_id: int):
     try:
         while True:
-            # TODO вызываем функцию db_compare_products,
-            #  вызываем функцию db_add_products и отправляем сообщения с новыми товарами
+            user = await User.get_user(message.from_user.id, session)
+            companies = user.companies
+            for company in companies:
+                # Проверка подключения client_id и api_key к озону
+                util = Utils(await checking_user_api_key(user, company),
+                             await checking_user_client_id(user, company))
+                # Получение и сохранение продуктов
+                products = await util.connection()
+                print(products)
+                # TODO вызываем функцию db_compare_products,
+                #  вызываем функцию db_add_products и отправляем сообщения с новыми товарами
             await bot.send_message(chat_id=user_id, text="Ежедневное сообщение")
             #  тут, ниже, время указывается в секундах
             await asyncio.sleep(86400)
@@ -124,7 +134,6 @@ async def api_key(message: Message, state: FSMContext, session: AsyncSession):
     await user.save(session=session)
 
     await state.set_state(Process.writing_api_key)
-    await asyncio.create_task(send_daily_message(user_id=message.from_user.id))
 
 
 @router.message(Process.writing_api_key)
@@ -147,9 +156,11 @@ async def db_add_products(session, util, company, products):
 
 
 async def db_compare_products(util, products):
+    new_products = []
     for product in products:
         product['name'] = (await util.product_name(product['id']))['result']['name']
         # TODO добавить сравнение передаваемых товаров с товарами а БД
+    return new_products
 
 
 @router.message(Process.writing_company_name)
@@ -196,6 +207,8 @@ async def connection(message: Message, state: FSMContext, session: AsyncSession)
 
     await message.answer(text="Подключение прошло успешно!",
                          reply_markup=keyboard)
+
+    await asyncio.create_task(send_daily_message(message=message, session=session, user_id=message.from_user.id))
 
     # # Обновление сообщения
     # await loading_message.edit_reply_markup(text="Подключение прошло успешно!",
