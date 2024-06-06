@@ -48,15 +48,14 @@ async def send_daily_message(message, session, user_id: int):
                              await checking_user_client_id(user, company))
                 # Получение и сохранение продуктов
                 products = await util.connection()
-                print(products)
-                db_products = await db_compare_products(util, products, session)
-                print(db_products)
-
-                # TODO вызываем функцию db_compare_products,
-                #  вызываем функцию db_add_products и отправляем сообщения с новыми товарами
-            await bot.send_message(chat_id=user_id, text="Ежедневное сообщение")
+                new_products = await db_compare_products(util, products, session)
+                print(new_products)
+                for product in new_products:
+                    await bot.send_message(chat_id=user_id, text=product['name'])
+                await bot.send_message(chat_id=user_id, text="Новых товаров нет")
+                await db_add_products(session, util, company, new_products)
             #  тут, ниже, время указывается в секундах
-            await asyncio.sleep(86400)
+            await asyncio.sleep(60)
     except Exception as e:
         print(f"Failed to send message to {user_id}: {e}")
 
