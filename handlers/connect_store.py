@@ -5,7 +5,7 @@ from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
-from sqlalchemy import select
+from sqlalchemy import select, and_
 
 from data.config import bot
 from keyboard.account_keyboard import keyboard
@@ -22,7 +22,6 @@ router = Router()
 
 
 class Process(StatesGroup):
-    daily_message = State()
     writing_name = State()
     writing_client_id = State()
     writing_api_key = State()
@@ -38,8 +37,6 @@ class Process(StatesGroup):
     delete = State()
 
 
-# @router.message(Process.daily_message)
-# @session_db
 async def send_daily_message(message, session, user_id: int):
     try:
         while True:
@@ -52,6 +49,9 @@ async def send_daily_message(message, session, user_id: int):
                 # Получение и сохранение продуктов
                 products = await util.connection()
                 print(products)
+                db_products = await db_compare_products(util, products, session)
+                print(db_products)
+
                 # TODO вызываем функцию db_compare_products,
                 #  вызываем функцию db_add_products и отправляем сообщения с новыми товарами
             await bot.send_message(chat_id=user_id, text="Ежедневное сообщение")
@@ -59,21 +59,6 @@ async def send_daily_message(message, session, user_id: int):
             await asyncio.sleep(86400)
     except Exception as e:
         print(f"Failed to send message to {user_id}: {e}")
-
-
-# @session_db
-# async def send_daily_message(session: AsyncSession):
-#     # Получение пользователей из базы данных и отправка им сообщения
-#     users = await session.execute(select(User))
-#     for user in users.scalars():
-#         try:
-#             await bot.send_message(
-#                 chat_id=user.telegram_id,
-#                 text="Ежедневное сообщение",
-#                 reply_markup=keyboard
-#             )
-#         except Exception as e:
-#             print(f"Failed to send message to {user.telegram_id}: {e}")
 
 
 @router.message(Process.choosing_moves, F.text == (btn("hello", "0")))
@@ -149,17 +134,29 @@ async def company_name(message: Message, state: FSMContext):
 async def db_add_products(session, util, company, products):
     for product in products:
         product['name'] = (await util.product_name(product['id']))['result']['name']
-        product_instance = Product(product_id=product['id'], name=product['name'], price=product['price'],
+        product_instance = Product(product_id=product['id'],
+                                   name=product['name'],
+                                   price=product['price'],
                                    action_price=product['action_price'])
         company.products.append(product_instance)
         await product_instance.save(session=session)
 
 
-async def db_compare_products(util, products):
-    new_products = []
-    for product in products:
+async def db_compare_products(util, products, session):
+    conditions = [
+        (Product.product_id != product['id']) &
+        (Product.action_price != product['action_price'])
+        for product in products
+    ]
+
+    combined_conditions = and_(*conditions)
+    query = select(Product).filter(combined_conditions)
+    result = await session.execute(query)
+    new_products = result.scalars().all()
+
+    for product in new_products:
         product['name'] = (await util.product_name(product['id']))['result']['name']
-        # TODO добавить сравнение передаваемых товаров с товарами а БД
+
     return new_products
 
 

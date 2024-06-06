@@ -10,18 +10,32 @@ from models import Promotion, Company, User, Product
 async def main():
     await global_init()
     async with create_session() as session:
+        # user = await User.get_user(telegram_id=479546019, session=session)
+        company = await Company.get_by_client_id(client_id=74392, session=session)
+        # company = user.companies
+
+        result = company.products
+        # client_id = company.client_id
+        # api_key = company.api_key
+        # print(f"Client ID: {client_id}, API Key: {api_key}")
+        #
+        # user = await Company.users()
+        # await company.save(session=session)
+        print(result)
 
         # company1 = Company.get_by_id(client_id=74392)
-        company3 = Company(client_id=123, api_key="3323982dhjf", company_name="name")
-
-        product = Product(product_id=5454, name="name_1", price=1500, action_price=1000)
-
-        company3.products.append(product)
-
-        await company3.save(session=session)
-        # await user1.save(session=session)
-        await product.save(session=session)
-        # await session.commit()
+        # company3 = Company(client_id=123, api_key="3323982dhjf", company_name="name")
+        #
+        # product = Product(product_id=5454, name="name_1", price=1500, action_price=1000)
+        #
+        # company3.products.append(product)
+        #
+        #
+        #
+        # await company3.save(session=session)
+        # # await user1.save(session=session)
+        # await product.save(session=session)
+        # # await session.commit()
 
 
 

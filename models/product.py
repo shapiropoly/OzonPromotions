@@ -29,16 +29,16 @@ class Product(Base):
     )
 
     @classmethod
-    async def get_items(cls, name: str, session: AsyncSession) -> Self:
+    async def get_product(cls, product_id: int, session: AsyncSession) -> Self:
         """
-        Get object by company_name
+        Get object by product
 
-        :param name: company_name
+        :param product_id: id
         :param session: db session
         :return: Companies object
         """
 
-        _ = await session.execute(select(cls).where(cls.company_name == name))
+        _ = await session.execute(select(cls).where(cls.product_id == product_id))
         return _.scalar()
 
     async def save(self, session: AsyncSession):
