@@ -2,7 +2,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Self, List, TYPE_CHECKING
 
-from sqlalchemy import select, BIGINT
+from sqlalchemy import select, BIGINT, Integer
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -17,7 +17,7 @@ class Product(Base):
     __tablename__ = 'products'
 
     id: Mapped[int] = mapped_column(BIGINT, autoincrement=True, primary_key=True)
-    product_id: Mapped[int]
+    product_id: Mapped[int] = mapped_column(Integer, nullable=False)
     name: Mapped[str]
     price: Mapped[int]
     action_price: Mapped[int]
