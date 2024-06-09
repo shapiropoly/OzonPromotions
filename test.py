@@ -9,6 +9,7 @@ from models.db_session import global_init, session_db, create_session, get_datab
 from models import Promotion, Company, User, Product
 from ozon.utils import Utils
 from utils.checking import checking_user_api_key, checking_user_client_id
+from utils.product_message import product_message
 
 
 async def main():
@@ -30,19 +31,27 @@ async def main():
 
         # for company in user.companies:
         #     db_products = company.products
-        #     print(db_products.product_id)
+        #     for db_product in db_products:
+        #         print("db_product: ", db_product.product_id, "action_price: ", db_product.action_price)
 
         for product in products:
-            check_product = await Product.get_product(product_id=product['id'], session=session)
-
+            check_product = await Product.get_product(product_id=product['id'], action_price=product['action_price'], session=session)
 
             if not check_product:
+                # print("Такого продукта нету! ", product)
                 new_products.append(product)
 
-            print("Product in Utils:", product['id'])
+            # print("Product in Utils:", product['id'], "action_price:", product['action_price'])
             conditions = []
 
+        for p in new_products:
+            p['name'] = (await util.product_name(p['id']))['result']['name']
+
         print(new_products)
+
+        for db_p in new_products:
+            print(product_message(db_p))
+
 
                 # for db_product in db_products:
                 #

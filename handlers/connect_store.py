@@ -1,7 +1,6 @@
 import asyncio
 
 from aiogram import Router, F, types
-from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
@@ -16,7 +15,7 @@ from keyboard.inline_keyboard import make_keyboard
 from utils.checking import checking_user_company, checking_user_client_id, checking_user_api_key
 from utils.message import btn, msg
 from sqlalchemy.ext.asyncio import AsyncSession
-from aiogram.filters import Command
+from utils.product_message import product_message
 
 router = Router()
 
@@ -43,19 +42,26 @@ async def send_daily_message(message, session, user_id: int):
             user = await User.get_user(message.from_user.id, session)
             companies = user.companies
             for company in companies:
-                # Проверка подключения client_id и api_key к озону
+
                 util = Utils(await checking_user_api_key(user, company),
                              await checking_user_client_id(user, company))
-                # Получение и сохранение продуктов
+
                 products = await util.connection()
-                new_products = await db_compare_products(util, products, session)
-                print(new_products)
-                for product in new_products:
-                    await bot.send_message(chat_id=user_id, text=product['name'])
-                await bot.send_message(chat_id=user_id, text="Новых товаров нет")
-                await db_add_products(session, util, company, new_products)
-            #  тут, ниже, время указывается в секундах
-            await asyncio.sleep(60)
+
+                db_products = await db_compare_products(util, products, session)
+
+                for db_product in db_products:
+                    product_msg = product_message(db_product)
+                    print(product_msg)
+                    await bot.send_message(chat_id=user_id, text=product_msg)
+                    # TODO удалить старые товары из бд и загрузить новые
+
+
+                # TODO вызываем функцию db_compare_products,
+                #  вызываем функцию db_add_products и отправляем сообщения с новыми товарами
+            await bot.send_message(chat_id=user_id, text="Ежедневное сообщение")
+            #  тут, ниже, время указывается в секундах (сутки – 86400)
+            await asyncio.sleep(30)
     except Exception as e:
         print(f"Failed to send message to {user_id}: {e}")
 
@@ -142,16 +148,13 @@ async def db_add_products(session, util, company, products):
 
 
 async def db_compare_products(util, products, session):
-    conditions = [
-        (Product.product_id != product['id']) &
-        (Product.action_price != product['action_price'])
-        for product in products
-    ]
+    new_products = []
 
-    combined_conditions = and_(*conditions)
-    query = select(Product).filter(combined_conditions)
-    result = await session.execute(query)
-    new_products = result.scalars().all()
+    for product in products:
+        check_product = await Product.get_product(product_id=product['id'], action_price=product['action_price'], session=session)
+
+        if not check_product:
+            new_products.append(product)
 
     for product in new_products:
         product['name'] = (await util.product_name(product['id']))['result']['name']
@@ -163,7 +166,7 @@ async def db_compare_products(util, products, session):
 @session_db
 async def connection(message: Message, state: FSMContext, session: AsyncSession):
     # Отправка сообщения "Загрузка"
-    loading_message = await message.answer(text="Загрузка...")
+    loading_message = await message.answer(text="Подождите чуть-чуть, идет загрузка ваших товаров...")
 
     # Обновление данных состояния
     await state.update_data(company_name=message.text)
@@ -230,62 +233,6 @@ async def connection(message: Message, state: FSMContext, session: AsyncSession)
 #     else:
 #         await state.set_state(Process.account)
 #         print("Прошел тут")
-
-
-# @router.callback_query(Process.check_current_company)
-# @session_db
-# async def check_current_company(callback_query: CallbackQuery, state: FSMContext, session: AsyncSession):
-#     current_telegram_id = callback_query.from_user.id
-#     user = await User.get_user(telegram_id=current_telegram_id, session=session)
-#     print(user)
-#
-#     if user and user.companies:
-#         company = user.companies[0]
-#         client_id = company.client_id
-#         api_key = company.api_key
-#         print(f"Client ID: {client_id}, API Key: {api_key}")
-#
-#         await state.set_state(Process.account)
-#         print("Прошел тут")
-#     else:
-#         await callback_query.message.answer(
-#             text=msg("registration", "0"),
-#             reply_markup=ReplyKeyboardRemove()
-#         )
-#         await state.set_state(Process.writing_name)
-#         print("Прошел вот тут")
-
-
-# @router.callback_query(Process.check_current_company)
-# @session_db
-# async def check_current_company(callback_query: CallbackQuery, state: FSMContext, session: AsyncSession):
-#     user = await User.get_user(telegram_id=callback_query.from_user.id, session=session)
-#
-#     if user:
-#         if user.companies:
-#             company = user.companies[0]  # пользователь связан хотя бы с одной компанией
-#             client_id = company.client_id
-#             api_key = company.api_key
-#             print(f"Client ID: {client_id}, API Key: {api_key}")
-#
-#             await state.set_state(Process.account)
-#             print("Прошел тут 1")
-#         else:
-#             print("No companies associated with user")
-#             await callback_query.message.answer(
-#                 text=msg("registration", "0"),
-#                 reply_markup=ReplyKeyboardRemove()
-#             )
-#             await state.set_state(Process.writing_name)
-#             print("Прошел вот тут 1")
-#     else:
-#         print("User not found")
-#         await callback_query.message.answer(
-#             text=msg("registration", "0"),
-#             reply_markup=ReplyKeyboardRemove()
-#         )
-#         await state.set_state(Process.writing_name)
-#         print("Прошел вот тут 2")
 
 
 @router.message(Process.account, F.text == (btn("hello", "0")))
