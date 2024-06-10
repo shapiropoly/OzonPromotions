@@ -9,8 +9,12 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from models.db_session import Base
 from .products_to_companies import products_to_companies_association_table
 
+
 if TYPE_CHECKING:
     from . import Company
+
+
+from .company import Company
 
 
 class Product(Base):
@@ -49,13 +53,22 @@ class Product(Base):
         await session.commit()
 
     @classmethod
-    async def clear_products_table(cls, session: AsyncSession) -> None:
+    async def clear_products_table(cls, client_id: int, session: AsyncSession) -> None:
         """
-        Очистить таблицу products данные из таблицы связей.
+        Очистить данные таблицы products связанные с компанией по client_id.
 
+        :param client_id: client_id компании
         :param session: сессия базы данных
         """
 
-        await session.execute(delete(products_to_companies_association_table))
-        await session.execute(delete(cls))
-        await session.commit()
+        company = await Company.get_by_client_id(client_id, session)
+
+        if company:
+            product_ids = [product.id for product in company.products]
+
+            await session.execute(delete(products_to_companies_association_table).where(
+                products_to_companies_association_table.c.product_id.in_(product_ids)
+            ))
+
+            await session.execute(delete(cls).where(cls.id.in_(product_ids)))
+            await session.commit()

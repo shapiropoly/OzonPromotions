@@ -15,17 +15,41 @@ from utils.product_message import product_message
 async def main():
     await global_init()
     async with create_session() as session:
-        user = await User.get_user(telegram_id=479546019, session=session)
-        company = await Company.get_by_client_id(client_id=74392, session=session)
+        # # # user = await User.get_user(telegram_id=479546019, session=session)
+        # c1 = Company(client_id=123, api_key="434928934", company_name="name1")
+        # c2 = Company(client_id=234, api_key="3293343", company_name="name2")
+        # await c1.save(session=session)
+        # await c2.save(session=session)
+
+        # c1 = await Company.get_by_client_id(client_id=123, session=session)
+        # c2 = await Company.get_by_client_id(client_id=234, session=session)
+        #
+        # # # company = await Company.get_by_client_id(client_id=74392, session=session)
+        # p1 = Product(product_id=123, name="p1", price=100, action_price=50)
+        # p2 = Product(product_id=234, name="p2", price=100, action_price=50)
+        # p3 = Product(product_id=345, name="p3", price=100, action_price=50)
+        # #
+        # p1.companies = [c1]
+        # p2.companies = [c1]
+        # p3.companies = [c2]
+        # #
+        # await p1.save(session=session)
+        # await p2.save(session=session)
+        # await p3.save(session=session)
         # company = user.companies
 
-
-        # products = company.products
+        c1 = await Company.get_by_client_id(client_id=123, session=session)
+        # c2 = await Company.get_by_client_id(client_id=234, session=session)
+        #
+        #
+        # products = c1.products
         # print(products)
         #
-        # await Product.clear_products_table(session=session)
+        # # print(company.client_id)
+        # # #
+        await Product.clear_products_table(client_id=c1.client_id, session=session)
 
-        products2 = company.products
+        products2 = c1.products
 
         print(products2)
 
