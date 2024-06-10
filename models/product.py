@@ -2,7 +2,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Self, List, TYPE_CHECKING
 
-from sqlalchemy import select, BIGINT, Integer
+from sqlalchemy import select, BIGINT, Integer, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -46,4 +46,16 @@ class Product(Base):
 
     async def save(self, session: AsyncSession):
         session.add(self)
+        await session.commit()
+
+    @classmethod
+    async def clear_products_table(cls, session: AsyncSession) -> None:
+        """
+        Очистить таблицу products данные из таблицы связей.
+
+        :param session: сессия базы данных
+        """
+
+        await session.execute(delete(products_to_companies_association_table))
+        await session.execute(delete(cls))
         await session.commit()

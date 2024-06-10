@@ -19,12 +19,26 @@ async def main():
         company = await Company.get_by_client_id(client_id=74392, session=session)
         # company = user.companies
 
-        util = Utils(await checking_user_api_key(user, company),
-                     await checking_user_client_id(user, company))
-        # Получение и сохранение продуктов
-        products = await util.connection()
 
-        new_products = []
+        # products = company.products
+        # print(products)
+        #
+        # await Product.clear_products_table(session=session)
+
+        products2 = company.products
+
+        print(products2)
+
+
+
+
+
+        # util = Utils(await checking_user_api_key(user, company),
+        #              await checking_user_client_id(user, company))
+        # # Получение и сохранение продуктов
+        # products = await util.connection()
+        #
+        # new_products = []
 
 
 
@@ -34,23 +48,23 @@ async def main():
         #     for db_product in db_products:
         #         print("db_product: ", db_product.product_id, "action_price: ", db_product.action_price)
 
-        for product in products:
-            check_product = await Product.get_product(product_id=product['id'], action_price=product['action_price'], session=session)
-
-            if not check_product:
-                # print("Такого продукта нету! ", product)
-                new_products.append(product)
-
-            # print("Product in Utils:", product['id'], "action_price:", product['action_price'])
-            conditions = []
-
-        for p in new_products:
-            p['name'] = (await util.product_name(p['id']))['result']['name']
-
-        print(new_products)
-
-        for db_p in new_products:
-            print(product_message(db_p))
+        # for product in products:
+        #     check_product = await Product.get_product(product_id=product['id'], action_price=product['action_price'], session=session)
+        #
+        #     if not check_product:
+        #         # print("Такого продукта нету! ", product)
+        #         new_products.append(product)
+        #
+        #     # print("Product in Utils:", product['id'], "action_price:", product['action_price'])
+        #     conditions = []
+        #
+        # for p in new_products:
+        #     p['name'] = (await util.product_name(p['id']))['result']['name']
+        #
+        # print(new_products)
+        #
+        # for db_p in new_products:
+        #     print(product_message(db_p))
 
 
                 # for db_product in db_products:
