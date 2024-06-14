@@ -7,7 +7,7 @@ from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
 from sqlalchemy import select, and_
 
 from data.config import bot
-from handlers.delete_product import send_daily_message
+# from handlers.delete_product import send_daily_message
 from handlers.registration import Registration
 from keyboard.account_keyboard import keyboard
 from keyboard.keyboard_account import CompanyCallbackFactory
@@ -40,32 +40,37 @@ class Process(StatesGroup):
     delete = State()
 
 
-# async def send_daily_message(message, session, user_id: int):
-#     try:
-#         while True:
-#             user = await User.get_user(message.from_user.id, session)
-#             companies = user.companies
-#             for company in companies:
-#
-#                 util = Utils(await checking_user_api_key(user, company),
-#                              await checking_user_client_id(user, company))
-#
-#                 products = await util.connection()
-#
-#                 new_products = await db_compare_products(util, products, session)
-#
-#                 await db_add_products(session, util, company, products)
-#
-#                 for new_product in new_products:
-#                     product_msg = product_message(new_product)
-#                     await bot.send_message(chat_id=user_id, text=product_msg,
-#                                            reply_markup=make_keyboard_delete_products(new_product))
-#
-#             await bot.send_message(chat_id=user_id, text="Ежедневное сообщение")
-#             #  тут, ниже, время указывается в секундах (сутки – 86400)
-#             await asyncio.sleep(30)
-#     except Exception as e:
-#         print(f"Failed to send message to {user_id}: {e}")
+async def send_daily_message(message, session, user_id: int):
+    try:
+        while True:
+            user = await User.get_user(message.from_user.id, session)
+            companies = user.companies
+            for company in companies:
+
+                api_key = await checking_user_api_key(user, company)
+                client_id = await checking_user_client_id(user, company)
+
+                util = Utils(api_key, client_id)
+
+                products = await util.connection()
+                print(products)
+
+                new_products = await db_compare_products(util, products, session)
+                print(new_products)
+
+                await db_add_products(session, util, company, products)
+
+                for new_product in new_products:
+                    product_msg = product_message(new_product)
+                    print(product_msg)
+                    await bot.send_message(chat_id=user_id, text=product_msg,
+                                           reply_markup=make_keyboard_delete_products(new_product, api_key, client_id))
+
+            await bot.send_message(chat_id=user_id, text="Ежедневное сообщение")
+            #  тут, ниже, время указывается в секундах (сутки – 86400)
+            await asyncio.sleep(10)
+    except Exception as e:
+        print(f"Failed to send message to {user_id}: {e}")
 
 
 @router.message(Process.choosing_moves, F.text == (btn("hello", "0")))
@@ -165,6 +170,7 @@ async def db_compare_products(util, products, session):
                                                   session=session)
         if not check_product:
             new_products.append(product)
+    print(new_products)
 
     for product in new_products:
         product['name'] = (await util.product_name(product['id']))['result']['name']
