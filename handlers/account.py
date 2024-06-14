@@ -27,7 +27,6 @@ router = Router()
 async def account(message: Message, session: AsyncSession):
     user = await User.get_user(message.from_user.id, session)
     companies = user.companies
-    print(companies)
     await message.answer(
         text=msg("account", "0"),
         reply_markup=make_keyboard_account(companies)

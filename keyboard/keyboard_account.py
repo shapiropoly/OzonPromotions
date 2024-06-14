@@ -19,6 +19,6 @@ def make_keyboard_account(companies: list[Company]) -> InlineKeyboardMarkup:
     for company in companies:
         builder.button(text=company.company_name,
                        callback_data=CompanyCallbackFactory(id=company.id, client_id=company.client_id))
-    builder.button(text=btn("account", "0"))
+    builder.button(text=btn("account", "0"), callback_data="add_company")
     builder.adjust(1)
     return builder.as_markup()

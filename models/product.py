@@ -9,10 +9,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from models.db_session import Base
 from .products_to_companies import products_to_companies_association_table
 
-
 if TYPE_CHECKING:
     from . import Company
-
 
 from .company import Company
 
@@ -25,6 +23,7 @@ class Product(Base):
     name: Mapped[str]
     price: Mapped[int]
     action_price: Mapped[int]
+    action_id: Mapped[int]
     companies: Mapped[List[Company]] = relationship(
         secondary=products_to_companies_association_table,
         back_populates="products",
@@ -33,18 +32,18 @@ class Product(Base):
     )
 
     @classmethod
-    async def get_product(cls, product_id: int, action_price: int, session: AsyncSession) -> 'Self':
+    async def get_product(cls, product_id: int, action_id: int, session: AsyncSession) -> 'Self':
         """
         Get object by product
 
         :param product_id: id
-        :param action_price: price
+        :param action_id: action_id
         :param session: db session
         :return: Companies object
         """
 
         result = await session.execute(
-            select(cls).where(cls.product_id == product_id, cls.action_price == action_price)
+            select(cls).where(cls.product_id == product_id, cls.action_id == action_id)
         )
         return result.scalar()
 

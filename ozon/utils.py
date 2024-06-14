@@ -1,8 +1,8 @@
 from __future__ import print_function
-import aiohttp
+
 import asyncio
 
-from models import Product
+import aiohttp
 
 
 class Utils:
@@ -74,7 +74,8 @@ class Utils:
                     except aiohttp.ContentTypeError:
                         print("Response is not JSON")
                     return None
-
+        for product in all_products["result"]["products"]:
+            product["action_id"] = action_id
         return all_products
 
     async def all_promos_products(self, action_ids):
@@ -102,31 +103,7 @@ class Utils:
                     except aiohttp.ContentTypeError:
                         print("Response is not JSON")
                     return None
-
         return all_products
-
-    # async def promos_products_activate(self, action_id, products):
-    #     endpoint = '/v1/actions/products/activate'
-    #     url = self.base_url + endpoint
-    #     payload = {
-    #         "action_id": action_id,
-    #         "products": products
-    #     }
-    #
-    #     async with aiohttp.ClientSession(headers=self.headers) as session:
-    #         async with session.post(url, json=payload) as response:
-    #             if response.status == 200:
-    #                 result = await response.json()
-    #             else:
-    #                 print(f"Error: {response.status}")
-    #                 try:
-    #                     error_response = await response.json()
-    #                     print(error_response)
-    #                 except aiohttp.ContentTypeError:
-    #                     print("Response is not JSON")
-    #                 return None
-    #
-    #     return result
 
     async def promos_products_deactivate(self, action_id, products_ids):
         endpoint = '/v1/actions/products/deactivate'
@@ -140,6 +117,7 @@ class Utils:
             async with session.post(url, json=payload) as response:
                 if response.status == 200:
                     result = await response.json()
+                    return
                 else:
                     print(f"Error: {response.status}")
                     try:
