@@ -9,8 +9,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from models.db_session import Base
 from .products_to_companies import products_to_companies_association_table
 
+
 if TYPE_CHECKING:
     from . import Company
+
 
 from .company import Company
 
@@ -36,8 +38,8 @@ class Product(Base):
         """
         Get object by product
 
-        :param product_id: id
-        :param action_id: action_id
+        :param product_id: product id
+        :param action_id: action id
         :param session: db session
         :return: Companies object
         """
@@ -50,6 +52,29 @@ class Product(Base):
     async def save(self, session: AsyncSession):
         session.add(self)
         await session.commit()
+
+    @classmethod
+    async def delete_product(cls, product_id: int, action_id: int, session: AsyncSession) -> None:
+        """
+        Удалить товар по product_id и action_id
+
+        :param product_id: product id
+        :param action_id: action id
+        :param session: сессия базы данных
+        """
+
+        product = await Product.get_product(product_id, action_id, session)
+
+        if product:
+            await session.execute(
+                delete(products_to_companies_association_table).where(
+                    products_to_companies_association_table.c.product_id == product.id
+                )
+            )
+            await session.execute(
+                delete(cls).where(cls.id == product.id)
+            )
+            await session.commit()
 
     @classmethod
     async def clear_products_table(cls, client_id: int, session: AsyncSession) -> None:
