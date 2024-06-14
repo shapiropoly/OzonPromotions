@@ -8,6 +8,7 @@ from sqlalchemy import select, and_
 
 from data.config import bot
 from keyboard.account_keyboard import keyboard
+from keyboard.keyboard_account import CompanyCallbackFactory
 from models import User, Company, Product
 from models.db_session import session_db
 from ozon.utils import Utils
@@ -155,8 +156,8 @@ async def db_compare_products(util, products, session):
     new_products = []
 
     for product in products:
-        check_product = await Product.get_product(product_id=product['id'], action_price=product['action_price'], session=session)
-
+        check_product = await Product.get_product(product_id=product['id'], action_price=product['action_price'],
+                                                  session=session)
         if not check_product:
             new_products.append(product)
 
@@ -194,12 +195,6 @@ async def connection(message: Message, state: FSMContext, session: AsyncSession)
     products = await util.connection()
 
     await db_add_products(session, util, company, products)
-    # for product in products:
-    #     product['name'] = (await util.product_name(product['id']))['result']['name']
-    #     product_instance = Product(product_id=product['id'], name=product['name'], price=product['price'],
-    #                                action_price=product['action_price'])
-    #     company.products.append(product_instance)
-    #     await product_instance.save(session=session)
 
     await company.save(session=session)
 
@@ -213,55 +208,25 @@ async def connection(message: Message, state: FSMContext, session: AsyncSession)
 
     await asyncio.create_task(send_daily_message(message=message, session=session, user_id=message.from_user.id))
 
-    # # Обновление сообщения
-    # await loading_message.edit_reply_markup(text="Подключение прошло успешно!",
-    #                                         reply_markup=keyboard)
 
-
-# async def check_current_company(callback_query: CallbackQuery, state: FSMContext, session: AsyncSession):
-#     # TODO получить client-id api-key текущего пользователя в БД
-#     current_telegram_id = callback_query.from_user.id
-#     result = await session.execute(select(User).filter(User.telegram_id == current_telegram_id))
-#     user = result.scalars().first()
-#     print(user.companies)
+# @router.message(Process.account, F.text == (btn("hello", "0")))
+# async def account(message: Message, state: FSMContext):
+#     await message.answer(
+#         text=msg("account", "0"),
+#         # TODO сделать кнопки компаний юзера из бд
+#         reply_markup=make_keyboard([btn("account", "0"), btn("account", "1"), btn("account", "2")])
+#     )
 #
-#     # TODO если с компанией проблемы, то вывести ошибку текущей компании
-#     if not user:
-#         await callback_query.message.answer(
-#             text=msg("registration", "0"),
-#             reply_markup=ReplyKeyboardRemove()
-#         )
-#         await state.set_state(Process.writing_name)
-#         print("Прошел вот тут")
-#     # Перекидываем на аккаунт
-#     else:
-#         await state.set_state(Process.account)
-#         print("Прошел тут")
+#     await state.set_state(Process.choosing_company)
 
 
-@router.message(Process.account, F.text == (btn("hello", "0")))
-async def account(message: Message, state: FSMContext):
-    await message.answer(
-        text=msg("account", "0"),
-        # TODO сделать кнопки компаний юзера из бд
-        reply_markup=make_keyboard([btn("account", "0"), btn("account", "1"), btn("account", "2")])
-    )
-
-    await state.set_state(Process.choosing_company)
-
-
-@router.callback_query(Process.choosing_company, F.data == (btn("account", "2")))
+@router.callback_query(Process.choosing_company)
 async def account_settings(callback_query: CallbackQuery, state: FSMContext):
-    # удалить команию, добавить компанию
-    # TODO сделать удаление компании из БД по кнопкам (здесь также выводить список кнопок с компаниями)
-    # TODO сделать добавление — проводим заново по состояниям добавления компании
-    # при удалении компании, вывести список компаний в виде кнопок
-    # аллерт с подтверждением
     await callback_query.message.answer(
-        text="Настройки аккаунта будут доступны здесь",
-        reply_markup=keyboard
+        text=msg("account", "1"),
+        reply_markup=make_keyboard([btn("settings", "0"), btn("settings", "1")])
     )
-    await state.set_state(Process.account)
+    await state.set_state(Process.choosing_settings)
 
 
 @router.callback_query(Process.manage_promotions)

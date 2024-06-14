@@ -11,14 +11,14 @@ from utils.message import btn
 
 class CompanyCallbackFactory(CallbackData, prefix="company"):
     id: int
-    сlient_id: int
-
+    client_id: int
 
 
 def make_keyboard_account(companies: list[Company]) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     for company in companies:
-        builder.button(text=btn("account", "0"),
+        builder.button(text=company.company_name,
                        callback_data=CompanyCallbackFactory(id=company.id, client_id=company.client_id))
+    builder.button(text=btn("account", "0"))
     builder.adjust(1)
     return builder.as_markup()
