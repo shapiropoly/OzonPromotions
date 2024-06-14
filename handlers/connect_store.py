@@ -52,13 +52,10 @@ async def send_daily_message(message, session, user_id: int):
 
                 for db_product in db_products:
                     product_msg = product_message(db_product)
-                    print(product_msg)
                     await bot.send_message(chat_id=user_id, text=product_msg)
-                    # TODO удалить старые товары из бд и загрузить новые
 
+                await db_add_products(session, util, company, products)
 
-                # TODO вызываем функцию db_compare_products,
-                #  вызываем функцию db_add_products и отправляем сообщения с новыми товарами
             await bot.send_message(chat_id=user_id, text="Ежедневное сообщение")
             #  тут, ниже, время указывается в секундах (сутки – 86400)
             await asyncio.sleep(30)
@@ -141,6 +138,8 @@ async def company_name(message: Message, state: FSMContext):
 
 
 async def db_add_products(session, util, company, products):
+    await Product.clear_products_table(client_id=company.client_id, session=session)
+
     for product in products:
         product['name'] = (await util.product_name(product['id']))['result']['name']
         product_instance = Product(product_id=product['id'],
@@ -148,6 +147,7 @@ async def db_add_products(session, util, company, products):
                                    price=product['price'],
                                    action_price=product['action_price'])
         company.products.append(product_instance)
+
         await product_instance.save(session=session)
 
 
