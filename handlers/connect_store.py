@@ -129,6 +129,9 @@ async def api_key(message: Message, state: FSMContext, session: AsyncSession):
 @router.message(Process.writing_api_key)
 async def company_name(message: Message, state: FSMContext):
     await state.update_data(api_key=message.text)
+    # TODO сделать проверку на клиент айди + апи кей в бд.
+    #  Если они есть в бд, то не регистрируем компанию и не просим вводить название
+    #  + сказать, что компания есть в БД
     await message.answer(
         text=msg("registration", "3"),
         reply_markup=keyboard
