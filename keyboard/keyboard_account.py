@@ -14,6 +14,7 @@ class CompanyCallbackFactory(CallbackData, prefix="company"):
     сlient_id: int
 
 
+
 def make_keyboard_account(companies: list[Company]) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     for company in companies:

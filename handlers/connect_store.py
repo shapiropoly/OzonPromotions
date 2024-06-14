@@ -132,6 +132,7 @@ async def company_name(message: Message, state: FSMContext):
     # TODO сделать проверку на клиент айди + апи кей в бд.
     #  Если они есть в бд, то не регистрируем компанию и не просим вводить название
     #  + сказать, что компания есть в БД
+
     await message.answer(
         text=msg("registration", "3"),
         reply_markup=keyboard
