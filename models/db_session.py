@@ -26,7 +26,8 @@ def get_database_url(alembic: bool = False) -> str:
     if alembic:
         schema = "postgresql"
 
-    return f"{schema}://{env('db_host')}:{env('db_port')}/{env('db_name')}"
+    return (f"{schema}://{env('db_login')}:{env('db_password')}@"
+            f"{env('db_host')}:{env('db_port')}/{env('db_name')}")
 
 
 async def global_init():
