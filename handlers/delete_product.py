@@ -58,6 +58,7 @@ router = Router()
 @session_db
 async def delete_product(callback_data: DeleteProductCallbackFactory,
                          session: AsyncSession):
+    # TODO вытащить client_id и api_key через id компании
     util = Utils(callback_data.api_key, callback_data.client_id)
     await util.promos_products_deactivate(callback_data.product_id, callback_data.action_id)
     await Product.delete_product(callback_data.product_id, callback_data.action_id, session)
