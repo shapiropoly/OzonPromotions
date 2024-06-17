@@ -37,6 +37,11 @@ class Company(Base):
         _ = await session.execute(select(cls).where(cls.client_id == client_id))
         return _.scalar()
 
+    @classmethod
+    async def get_by_id(cls, id: int, session: AsyncSession) -> Self:
+        _ = await session.execute(select(cls).where(cls.id == id))
+        return _.scalar()
+
     async def save(self, session: AsyncSession):
         session.add(self)
         await session.commit()

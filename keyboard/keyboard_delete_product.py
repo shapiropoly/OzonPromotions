@@ -8,17 +8,14 @@ from utils.message import btn
 class DeleteProductCallbackFactory(CallbackData, prefix="delete_product"):
     product_id: int
     action_id: int
-    api_key: str
-    client_id: int
+    company_id: int
 
 
-def make_keyboard_delete_products(product, api_key, client_id) -> InlineKeyboardMarkup:
-    print(product)
+def make_keyboard_delete_products(product, company_id) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
-    builder.button(text=btn("account", "0"),
+    builder.button(text=btn("promotions", "0"),
                    callback_data=DeleteProductCallbackFactory(product_id=product['id'],
                                                               action_id=product['action_id'],
-                                                              api_key=api_key,
-                                                              client_id=client_id))
+                                                              company_id=company_id))
     builder.adjust(1)
     return builder.as_markup()

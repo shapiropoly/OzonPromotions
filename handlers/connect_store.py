@@ -47,24 +47,23 @@ async def send_daily_message(message, session, user_id: int):
             companies = user.companies
             for company in companies:
 
+                company_id = company.id
+
                 api_key = await checking_user_api_key(user, company)
                 client_id = await checking_user_client_id(user, company)
 
                 util = Utils(api_key, client_id)
 
                 products = await util.connection()
-                print(products)
 
                 new_products = await db_compare_products(util, products, session)
-                print(new_products)
 
                 await db_add_products(session, util, company, products)
 
                 for new_product in new_products:
                     product_msg = product_message(new_product)
-                    print(product_msg)
                     await bot.send_message(chat_id=user_id, text=product_msg,
-                                           reply_markup=make_keyboard_delete_products(new_product, api_key, client_id))
+                                           reply_markup=make_keyboard_delete_products(new_product, company_id))
 
             await bot.send_message(chat_id=user_id, text="Ежедневное сообщение")
             #  тут, ниже, время указывается в секундах (сутки – 86400)
@@ -170,7 +169,6 @@ async def db_compare_products(util, products, session):
                                                   session=session)
         if not check_product:
             new_products.append(product)
-    print(new_products)
 
     for product in new_products:
         product['name'] = (await util.product_name(product['id']))['result']['name']
