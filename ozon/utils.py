@@ -16,6 +16,17 @@ class Utils:
             'Content-Type': 'application/json'
         }
 
+    async def checking_connection(self):
+        endpoint = '/v2/product/info'
+        url = self.base_url + endpoint
+
+        async with aiohttp.ClientSession(headers=self.headers) as session:
+            async with session.post(url) as response:
+                if response.status == 200:
+                    return "подключилось"
+                else:
+                    return "не работает"
+
     async def promos(self):
         endpoint = '/v1/actions'
         url = self.base_url + endpoint
@@ -139,10 +150,11 @@ class Utils:
         return products
 
 
-def main():
+async def main():
     util = Utils('4dcff177-2194-4062-a662-b914c37417f7', '74392')
-    asyncio.run(util.connection())
+    result = await util.checking_connection()
+    print(result)
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

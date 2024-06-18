@@ -9,7 +9,7 @@ from sqlalchemy import select, and_
 from data.config import bot
 # from handlers.delete_product import send_daily_message
 from handlers.registration import Registration
-from keyboard.account_keyboard import keyboard
+from keyboard.main_keyboard import keyboard
 from keyboard.keyboard_account import CompanyCallbackFactory
 from keyboard.keyboard_delete_product import make_keyboard_delete_products
 from models import User, Company, Product
@@ -80,7 +80,16 @@ async def name(message: Message, state: FSMContext, session: AsyncSession):
     user = result.scalars().first()
 
     if user:
-        if user.companies:
+        print("вы – юзер")
+        company = user.companies
+        if company:
+            print("у вас есть компания. входите")
+            if not checking_user_client_id(user, company):
+                await message.answer(
+                    text=msg("registration", "0"),
+                    reply_markup=keyboard
+                )
+
             # TODO проверить активность компании (т. е. апи-кей и клиент-айди должны подключаться к озону)
             await state.set_state(Process.account)
         else:
@@ -219,16 +228,6 @@ async def connection(message: Message, state: FSMContext, session: AsyncSession)
     await asyncio.create_task(send_daily_message(message=message, session=session, user_id=message.from_user.id))
 
 
-# @router.message(Process.account, F.text == (btn("hello", "0")))
-# async def account(message: Message, state: FSMContext):
-#     await message.answer(
-#         text=msg("account", "0"),
-#         # TODO сделать кнопки компаний юзера из бд
-#         reply_markup=make_keyboard([btn("account", "0"), btn("account", "1"), btn("account", "2")])
-#     )
-#
-#     await state.set_state(Process.choosing_company)
-
 
 @router.callback_query(Process.choosing_company)
 async def account_settings(callback_query: CallbackQuery, state: FSMContext):
@@ -237,24 +236,3 @@ async def account_settings(callback_query: CallbackQuery, state: FSMContext):
         reply_markup=make_keyboard([btn("settings", "0"), btn("settings", "1")])
     )
     await state.set_state(Process.choosing_settings)
-
-
-@router.callback_query(Process.manage_promotions)
-async def actual_promotions(callback_query: CallbackQuery, state: FSMContext):
-    # TODO закинуть все товары в акциях в БД
-    # Раз в день проходится по новым товарам в акциях и сравнивать их с товарами в БД
-    # Извлекаем по одному товару и создаем сообщение с ним с кнопкой
-    await callback_query.message.answer(
-        text="",
-        reply_markup=keyboard
-    )
-    await state.set_state(Process.actual_promotions)
-
-# @router.message(Command(commands=["1234"]))
-# async def delete(message: Message, state: FSMContext):
-#     await message.answer(
-#         text="Вы точно хотите удалить товар из акции",
-#         show_alert=True,
-#         reply_markup=make_keyboard([btn("hello", "0")])
-#     )
-#     await state.set_state(Process.delete)

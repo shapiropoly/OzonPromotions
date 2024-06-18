@@ -6,7 +6,7 @@ from aiogram.fsm.state import default_state
 from aiogram.types import Message, ReplyKeyboardRemove
 
 from handlers.connect_store import Process
-from keyboard.account_keyboard import keyboard
+from keyboard.main_keyboard import keyboard
 from keyboard.inline_keyboard import make_keyboard
 from utils.message import msg, btn
 

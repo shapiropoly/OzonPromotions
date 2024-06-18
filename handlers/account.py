@@ -8,7 +8,7 @@ from sqlalchemy import select, and_
 
 from data.config import bot
 from handlers.connect_store import Process
-from keyboard.account_keyboard import keyboard
+from keyboard.main_keyboard import keyboard
 from keyboard.keyboard_account import CompanyCallbackFactory, make_keyboard_account
 from models import User, Company, Product
 from models.db_session import session_db
