@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import List, Self, TYPE_CHECKING
-from sqlalchemy import select, BIGINT
+from sqlalchemy import select, BIGINT, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from models.db_session import Base
@@ -41,6 +41,33 @@ class Company(Base):
     async def get_by_id(cls, id: int, session: AsyncSession) -> Self:
         _ = await session.execute(select(cls).where(cls.id == id))
         return _.scalar()
+
+    @classmethod
+    async def delete_company(cls, company_id: int, session: AsyncSession) -> None:
+        """
+        Удалить компанию по company_id
+
+        :param company_id: id
+        :param session: сессия базы данных
+        """
+
+        company = await cls.get_by_id(company_id, session)
+
+        if company:
+            await session.execute(
+                delete(products_to_companies_association_table).where(
+                    products_to_companies_association_table.c.company_id == company_id
+                )
+            )
+            await session.execute(
+                delete(users_to_companies_association_table).where(
+                    users_to_companies_association_table.c.company_id == company_id
+                )
+            )
+            await session.execute(
+                delete(cls).where(cls.id == company_id)
+            )
+            await session.commit()
 
     async def save(self, session: AsyncSession):
         session.add(self)
