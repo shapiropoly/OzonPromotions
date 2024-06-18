@@ -16,7 +16,7 @@ from models import User, Company, Product
 from models.db_session import session_db
 from ozon.utils import Utils
 from keyboard.inline_keyboard import make_keyboard
-from utils.checking import checking_user_company, checking_user_client_id, checking_user_api_key
+from utils.checking import checking_user_company, checking_user_client_id, checking_user_api_key, checking_connection
 from utils.message import btn, msg
 from sqlalchemy.ext.asyncio import AsyncSession
 from utils.product_message import product_message
@@ -48,14 +48,11 @@ async def send_daily_message(message, session, user_id: int):
             for company in companies:
 
                 company_id = company.id
-
-                api_key = await checking_user_api_key(user, company)
-                client_id = await checking_user_client_id(user, company)
+                api_key = company.api_key
+                client_id = company.client_id
 
                 util = Utils(api_key, client_id)
-
                 products = await util.connection()
-
                 new_products = await db_compare_products(util, products, session)
 
                 await db_add_products(session, util, company, products)
@@ -80,30 +77,22 @@ async def name(message: Message, state: FSMContext, session: AsyncSession):
     user = result.scalars().first()
 
     if user:
-        print("вы – юзер")
+        print("Вы – юзер")
         company = user.companies
+
         if company:
-            print("у вас есть компания. входите")
-            if not checking_user_client_id(user, company):
-                await message.answer(
-                    text=msg("registration", "0"),
-                    reply_markup=keyboard
-                )
-
-            # TODO проверить активность компании (т. е. апи-кей и клиент-айди должны подключаться к озону)
-            await state.set_state(Process.account)
+            if checking_connection(user, company) == 200:
+                print("Подключение к озону прошло успешно")
+                # перекидываем в личный кабинет
+                await state.set_state(Process.account)
+            else:
+                # перекинуть на повторный ввод клиент-айди и апи-кей, название оставляем то же самое
+                print("У вас зарегана компания, но она не подключается к озону")
+        # перекинуть на регистрацию компании
         else:
-            print("Вы — юзер, но компания не активна, добавьте новую компанию")
+            print("Вы — юзер, но у вас нет компаний. зарегайте компанию")
 
-            # тут проблема: нужно сделать добавление в БД юзера не в функции,
-            # где мы забираем api-key, иначе работа идет некорректно
-
-            # await callback_query.message.answer(
-            #     text=msg("registration", "1"),
-            #     reply_markup=ReplyKeyboardRemove()
-            # )
-            # await state.set_state(Process.writing_client_id)
-
+    # перекидываем на регистрацию
     else:
         print("Вы — не юзер")
         await message.answer(
@@ -206,9 +195,9 @@ async def connection(message: Message, state: FSMContext, session: AsyncSession)
     company = Company(client_id=client_id, api_key=api_key, company_name=company_name)
     user.companies.append(company)
 
-    # Проверка подключения client_id и api_key к озону
-    util = Utils(await checking_user_api_key(user, company),
-                 await checking_user_client_id(user, company))
+    # TODO добавить Проверку подключения client_id и api_key к озону
+
+    util = Utils(api_key, client_id)
 
     # Получение и сохранение продуктов
     products = await util.connection()

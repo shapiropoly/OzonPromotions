@@ -1,3 +1,6 @@
+from ozon.utils import Utils
+
+
 async def checking_user_company(user, company):
     """
     Gets user and company objects
@@ -7,6 +10,15 @@ async def checking_user_company(user, company):
     """
     if company in user.companies:
         return company.client_id, company.api_key
+
+
+async def checking_connection(user, company):
+    if company in user.companies:
+        client_id = company.client_id
+        api_key = company.api_key
+
+        utils = Utils(client_id, api_key)
+        return utils.checking_connection()
 
 
 async def checking_user_client_id(user, company):

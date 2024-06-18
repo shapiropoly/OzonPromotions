@@ -17,15 +17,15 @@ class Utils:
         }
 
     async def checking_connection(self):
-        endpoint = '/v2/product/info'
+        endpoint = '/v1/actions'
         url = self.base_url + endpoint
 
         async with aiohttp.ClientSession(headers=self.headers) as session:
-            async with session.post(url) as response:
+            async with session.get(url) as response:
                 if response.status == 200:
-                    return "подключилось"
+                    return 200
                 else:
-                    return "не работает"
+                    return 400
 
     async def promos(self):
         endpoint = '/v1/actions'
