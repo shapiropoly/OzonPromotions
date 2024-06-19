@@ -8,7 +8,6 @@ from sqlalchemy import select, and_
 
 from data.config import bot
 # from handlers.delete_product import send_daily_message
-from handlers.registration import Registration
 from keyboard.main_keyboard import keyboard
 from keyboard.keyboard_account import CompanyCallbackFactory
 from keyboard.keyboard_delete_product import make_keyboard_delete_products
@@ -67,51 +66,6 @@ async def send_daily_message(message, session, user_id: int):
             await asyncio.sleep(10)
     except Exception as e:
         print(f"Failed to send message to {user_id}: {e}")
-
-
-# @router.message(Process.choosing_moves, F.text == (btn("hello", "0")))
-# @session_db
-# async def name(message: Message, state: FSMContext, session: AsyncSession):
-#     current_telegram_id = message.from_user.id
-#     result = await session.execute(select(User).filter(User.telegram_id == current_telegram_id))
-#     user = result.scalars().first()
-#
-#     if user:
-#
-#         companies = user.companies
-#
-#         if companies:
-#             for company in companies:
-#                 if await check_connection(company.client_id, company.api_key) == 400:
-#                     # Данные для подключения корректны, но ошибка со стороны Озона
-#                     await message.answer(
-#                         text=msg("check_connect", "2"),
-#                         reply_markup=keyboard
-#                     )
-#                     return
-#
-#
-#             await state.set_state(Process.account)
-#             print(await state.get_state())
-#             await asyncio.create_task(
-#                 send_daily_message(message=message, session=session, user_id=message.from_user.id))
-#
-#         # перекинуть на регистрацию компании
-#         else:
-#             await message.answer(
-#                 text=msg("registration", "1"),
-#                 reply_markup=keyboard
-#             )
-#             await state.set_state(Process.writing_client_id)
-#
-#
-#     else:
-#         # создать личный кабинет
-#         await message.answer(
-#             text=msg("registration", "0"),
-#             reply_markup=keyboard
-#         )
-#         await state.set_state(Process.writing_name)
 
 
 @router.message(Process.writing_name)
@@ -193,7 +147,7 @@ async def db_compare_products(util, products, session):
 
 
 @router.message(Process.writing_company_name)
-@router.message(Registration.writing_company_name)
+# @router.message(Registration.writing_company_name)
 @session_db
 async def connection(message: Message, state: FSMContext, session: AsyncSession):
     # Обновление данных состояния
@@ -233,6 +187,9 @@ async def connection(message: Message, state: FSMContext, session: AsyncSession)
         await state.set_state(Process.account)
 
         await loading_message.delete()
+
+        for message_id in range(6):
+            await message.chat.delete_message(message.message_id - message_id)
 
         await message.answer(text="Подключение прошло успешно!",
                              reply_markup=keyboard)

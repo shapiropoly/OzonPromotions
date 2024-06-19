@@ -26,6 +26,7 @@ router = Router()
 @router.message(Process.account, F.text == (btn("hello", "0")))
 @session_db
 async def account(message: Message, session: AsyncSession):
+    await message.delete()
     user = await User.get_user(message.from_user.id, session)
     companies = user.companies
     await message.answer(

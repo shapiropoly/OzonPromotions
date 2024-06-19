@@ -53,8 +53,6 @@ async def cmd_start(message: Message, state: FSMContext, session: AsyncSession):
             )
 
             await state.set_state(Process.account)
-            await asyncio.create_task(
-                send_daily_message(message=message, session=session, user_id=message.from_user.id))
 
         # перекинуть на регистрацию компании
         else:
@@ -63,7 +61,6 @@ async def cmd_start(message: Message, state: FSMContext, session: AsyncSession):
                 reply_markup=keyboard
             )
             await state.set_state(Process.writing_client_id)
-
 
     else:
         # создать личный кабинет
