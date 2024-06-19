@@ -26,7 +26,7 @@ async def client_id(callback_query: CallbackQuery, state: FSMContext):
 
 @router.message(Registration.writing_client_id)
 async def api_key(message: Message, state: FSMContext):
-    await state.update_data(client_id=int(message.text))
+    await state.update_data(client_id=message.text)
 
     await message.answer(
         text=msg("registration", "2"),

@@ -38,7 +38,14 @@ async def main():
         # await p3.save(session=session)
         # company = user.companies
 
-        c1 = await Company.get_by_client_id(client_id=123, session=session)
+        # c1 = await Company.get_by_client_id(client_id=123, session=session)
+        #
+        # print(c1.id)
+
+        c2 = await Company.delete_company(1, session)
+        print(c2)
+
+
         # c2 = await Company.get_by_client_id(client_id=234, session=session)
         #
         #
@@ -47,11 +54,11 @@ async def main():
         #
         # # print(company.client_id)
         # # #
-        await Product.clear_products_table(client_id=c1.client_id, session=session)
-
-        products2 = c1.products
-
-        print(products2)
+        # await Product.clear_products_table(client_id=c1.client_id, session=session)
+        #
+        # products2 = c1.products
+        #
+        # print(products2)
 
 
 

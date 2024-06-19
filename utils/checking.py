@@ -1,3 +1,5 @@
+import asyncio
+
 from ozon.utils import Utils
 
 
@@ -12,13 +14,17 @@ async def checking_user_company(user, company):
         return company.client_id, company.api_key
 
 
-async def checking_connection(user, company):
-    if company in user.companies:
-        client_id = company.client_id
-        api_key = company.api_key
+async def check_connection(client_id, api_key):
+    utils = Utils(api_key, client_id)
+    return await utils.checking_connection()
 
-        utils = Utils(client_id, api_key)
-        return utils.checking_connection()
+
+# async def main():
+#     result = await checking_connection('62-b914c37417f7', '74392')
+#     print(result)
+#
+# if __name__ == "__main__":
+#     asyncio.run(main())
 
 
 async def checking_user_client_id(user, company):

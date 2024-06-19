@@ -22,6 +22,7 @@ from utils.product_message import product_message
 router = Router()
 
 
+@router.message(Process.account)
 @router.message(Process.account, F.text == (btn("hello", "0")))
 @session_db
 async def account(message: Message, session: AsyncSession):

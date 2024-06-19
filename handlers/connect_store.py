@@ -16,7 +16,7 @@ from models import User, Company, Product
 from models.db_session import session_db
 from ozon.utils import Utils
 from keyboard.inline_keyboard import make_keyboard
-from utils.checking import checking_user_company, checking_user_client_id, checking_user_api_key, checking_connection
+from utils.checking import check_connection
 from utils.message import btn, msg
 from sqlalchemy.ext.asyncio import AsyncSession
 from utils.product_message import product_message
@@ -69,37 +69,49 @@ async def send_daily_message(message, session, user_id: int):
         print(f"Failed to send message to {user_id}: {e}")
 
 
-@router.message(Process.choosing_moves, F.text == (btn("hello", "0")))
-@session_db
-async def name(message: Message, state: FSMContext, session: AsyncSession):
-    current_telegram_id = message.from_user.id
-    result = await session.execute(select(User).filter(User.telegram_id == current_telegram_id))
-    user = result.scalars().first()
-
-    if user:
-        print("Вы – юзер")
-        company = user.companies
-
-        if company:
-            if checking_connection(user, company) == 200:
-                print("Подключение к озону прошло успешно")
-                # перекидываем в личный кабинет
-                await state.set_state(Process.account)
-            else:
-                # перекинуть на повторный ввод клиент-айди и апи-кей, название оставляем то же самое
-                print("У вас зарегана компания, но она не подключается к озону")
-        # перекинуть на регистрацию компании
-        else:
-            print("Вы — юзер, но у вас нет компаний. зарегайте компанию")
-
-    # перекидываем на регистрацию
-    else:
-        print("Вы — не юзер")
-        await message.answer(
-            text=msg("registration", "0"),
-            reply_markup=keyboard
-        )
-        await state.set_state(Process.writing_name)
+# @router.message(Process.choosing_moves, F.text == (btn("hello", "0")))
+# @session_db
+# async def name(message: Message, state: FSMContext, session: AsyncSession):
+#     current_telegram_id = message.from_user.id
+#     result = await session.execute(select(User).filter(User.telegram_id == current_telegram_id))
+#     user = result.scalars().first()
+#
+#     if user:
+#
+#         companies = user.companies
+#
+#         if companies:
+#             for company in companies:
+#                 if await check_connection(company.client_id, company.api_key) == 400:
+#                     # Данные для подключения корректны, но ошибка со стороны Озона
+#                     await message.answer(
+#                         text=msg("check_connect", "2"),
+#                         reply_markup=keyboard
+#                     )
+#                     return
+#
+#
+#             await state.set_state(Process.account)
+#             print(await state.get_state())
+#             await asyncio.create_task(
+#                 send_daily_message(message=message, session=session, user_id=message.from_user.id))
+#
+#         # перекинуть на регистрацию компании
+#         else:
+#             await message.answer(
+#                 text=msg("registration", "1"),
+#                 reply_markup=keyboard
+#             )
+#             await state.set_state(Process.writing_client_id)
+#
+#
+#     else:
+#         # создать личный кабинет
+#         await message.answer(
+#             text=msg("registration", "0"),
+#             reply_markup=keyboard
+#         )
+#         await state.set_state(Process.writing_name)
 
 
 @router.message(Process.writing_name)
@@ -115,7 +127,12 @@ async def client_id(message: Message, state: FSMContext):
 @router.message(Process.writing_client_id)
 @session_db
 async def api_key(message: Message, state: FSMContext, session: AsyncSession):
-    await state.update_data(client_id=int(message.text))
+    await state.update_data(client_id=message.text)
+
+    current_telegram_id = message.from_user.id
+    result = await session.execute(select(User).filter(User.telegram_id == current_telegram_id))
+    user = result.scalars().first()
+
     data = await state.get_data()
     name = data.get("name")
 
@@ -124,8 +141,9 @@ async def api_key(message: Message, state: FSMContext, session: AsyncSession):
         reply_markup=keyboard
     )
 
-    user = User(name=name, telegram_id=message.from_user.id, username=message.from_user.username)
-    await user.save(session=session)
+    if not user:
+        user = User(name=name, telegram_id=message.from_user.id, username=message.from_user.username)
+        await user.save(session=session)
 
     await state.set_state(Process.writing_api_key)
 
@@ -178,9 +196,6 @@ async def db_compare_products(util, products, session):
 @router.message(Registration.writing_company_name)
 @session_db
 async def connection(message: Message, state: FSMContext, session: AsyncSession):
-    # Отправка сообщения "Загрузка"
-    loading_message = await message.answer(text="Подождите чуть-чуть, идет загрузка ваших товаров...")
-
     # Обновление данных состояния
     await state.update_data(company_name=message.text)
     data = await state.get_data()
@@ -191,37 +206,35 @@ async def connection(message: Message, state: FSMContext, session: AsyncSession)
     # Получение пользователя
     user = await User.get_user(message.from_user.id, session)
 
-    # Создание и добавление компании
-    company = Company(client_id=client_id, api_key=api_key, company_name=company_name)
-    user.companies.append(company)
+    if await check_connection(client_id, api_key) == 400:
+        await message.answer(
+            text=msg("registration", "4"),
+            reply_markup=keyboard
+        )
+        await state.set_state(Process.writing_client_id)
 
-    # TODO добавить Проверку подключения client_id и api_key к озону
+    else:
+        loading_message = await message.answer(text="Подождите чуть-чуть, идет загрузка ваших товаров...")
 
-    util = Utils(api_key, client_id)
+        # Создание и добавление компании
+        company = Company(client_id=client_id, api_key=api_key, company_name=company_name)
+        user.companies.append(company)
 
-    # Получение и сохранение продуктов
-    products = await util.connection()
+        util = Utils(api_key, client_id)
 
-    await db_add_products(session, util, company, products)
+        # Получение и сохранение продуктов
+        products = await util.connection()
 
-    await company.save(session=session)
+        await db_add_products(session, util, company, products)
 
-    # Установка нового состояния
-    await state.set_state(Process.account)
+        await company.save(session=session)
 
-    await loading_message.delete()
+        # Установка нового состояния
+        await state.set_state(Process.account)
 
-    await message.answer(text="Подключение прошло успешно!",
-                         reply_markup=keyboard)
+        await loading_message.delete()
 
-    await asyncio.create_task(send_daily_message(message=message, session=session, user_id=message.from_user.id))
+        await message.answer(text="Подключение прошло успешно!",
+                             reply_markup=keyboard)
 
-
-
-@router.callback_query(Process.choosing_company)
-async def account_settings(callback_query: CallbackQuery, state: FSMContext):
-    await callback_query.message.answer(
-        text=msg("account", "1"),
-        reply_markup=make_keyboard([btn("settings", "0"), btn("settings", "1")])
-    )
-    await state.set_state(Process.choosing_settings)
+        await asyncio.create_task(send_daily_message(message=message, session=session, user_id=message.from_user.id))

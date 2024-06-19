@@ -16,7 +16,7 @@ class Company(Base):
     __tablename__ = 'companies'
 
     id: Mapped[int] = mapped_column(BIGINT, primary_key=True, autoincrement=True)
-    client_id: Mapped[int]
+    client_id: Mapped[str]
     api_key: Mapped[str]
     company_name: Mapped[str]
     products: Mapped[List[Product]] = relationship(
@@ -33,7 +33,7 @@ class Company(Base):
     )
 
     @classmethod
-    async def get_by_client_id(cls, client_id: int, session: AsyncSession) -> Self:
+    async def get_by_client_id(cls, client_id: str, session: AsyncSession) -> Self:
         _ = await session.execute(select(cls).where(cls.client_id == client_id))
         return _.scalar()
 

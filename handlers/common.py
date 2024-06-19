@@ -1,30 +1,77 @@
+import asyncio
+
 from aiogram import F, Router, types
 from aiogram.filters import Command
 from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import default_state
 from aiogram.types import Message, ReplyKeyboardRemove
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
-from handlers.connect_store import Process
+from handlers.connect_store import Process, send_daily_message
 from keyboard.main_keyboard import keyboard
 from keyboard.inline_keyboard import make_keyboard
+from models import User
+from models.db_session import session_db
+from utils.checking import check_connection
 from utils.message import msg, btn
 
 router = Router()
 
 
 @router.message(Command(commands=["start"]))
-async def cmd_start(message: Message, state: FSMContext):
+@session_db
+async def cmd_start(message: Message, state: FSMContext, session: AsyncSession):
     await state.clear()
     await message.answer(
         text=msg("hello", "0"),
         reply_markup=keyboard
     )
-    await message.answer(
-        text=msg("system", "0"),
-        reply_markup=keyboard
-    )
-    await state.set_state(Process.choosing_moves)
+
+    current_telegram_id = message.from_user.id
+    result = await session.execute(select(User).filter(User.telegram_id == current_telegram_id))
+    user = result.scalars().first()
+
+    if user:
+
+        companies = user.companies
+
+        if companies:
+            for company in companies:
+                if await check_connection(company.client_id, company.api_key) == 400:
+                    # Данные для подключения корректны, но ошибка со стороны Озона
+                    await message.answer(
+                        text=msg("check_connect", "2"),
+                        reply_markup=keyboard
+                    )
+                    return
+
+            await message.answer(
+                text=msg("system", "0"),
+                reply_markup=keyboard
+            )
+
+            await state.set_state(Process.account)
+            await asyncio.create_task(
+                send_daily_message(message=message, session=session, user_id=message.from_user.id))
+
+        # перекинуть на регистрацию компании
+        else:
+            await message.answer(
+                text=msg("registration", "1"),
+                reply_markup=keyboard
+            )
+            await state.set_state(Process.writing_client_id)
+
+
+    else:
+        # создать личный кабинет
+        await message.answer(
+            text=msg("registration", "0"),
+            reply_markup=keyboard
+        )
+        await state.set_state(Process.writing_name)
 
 
 @router.message(StateFilter(None), Command(commands=["cancel"]))
