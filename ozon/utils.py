@@ -8,7 +8,7 @@ import aiohttp
 class Utils:
     def __init__(self, api_key, client_id):
         self.api_key = api_key
-        self.client_id = client_id
+        self.client_id = str(client_id)
         self.base_url = 'https://api-seller.ozon.ru'
         self.headers = {
             'Client-Id': self.client_id,

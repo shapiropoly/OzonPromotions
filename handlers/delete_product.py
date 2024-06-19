@@ -21,12 +21,14 @@ async def delete_product(callback: CallbackQuery, callback_data: DeleteProductCa
 
     # Получение компании по ID
     company = await Company.get_by_id(company_id, session)
-    util = Utils(company.api_key, str(company.client_id))
+    util = Utils(company.api_key, company.client_id)
 
     # Деактивация промо продукта
     await util.promos_products_deactivate(action_id, [product_id])
 
     # Удаление продукта из базы данных
     await Product.delete_product(product_id, action_id, session)
+
+    await callback.message.delete()
 
     await callback.answer("Продукт удален.")
