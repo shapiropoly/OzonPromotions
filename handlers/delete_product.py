@@ -1,11 +1,10 @@
-import asyncio
-from aiogram import Router, types
+from aiogram import Router
 from aiogram.types import CallbackQuery
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from keyboard.keyboard_delete_product import DeleteProductCallbackFactory
 from models import Company, Product
 from models.db_session import session_db
-from keyboard.keyboard_delete_product import DeleteProductCallbackFactory
 from ozon.utils import Utils
 
 router = Router()

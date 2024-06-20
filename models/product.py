@@ -1,5 +1,5 @@
 from __future__ import annotations
-from datetime import datetime
+
 from typing import Self, List, TYPE_CHECKING
 
 from sqlalchemy import select, BIGINT, Integer, delete
@@ -9,10 +9,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from models.db_session import Base
 from .products_to_companies import products_to_companies_association_table
 
-
 if TYPE_CHECKING:
     from . import Company
-
 
 from .company import Company
 

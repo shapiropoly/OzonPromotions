@@ -26,7 +26,7 @@ class User(Base):
 
     @classmethod
     async def get_user(cls, telegram_id: int, session: AsyncSession) -> Self:
-        _= await session.execute(select(cls).where(cls.telegram_id == telegram_id))
+        _ = await session.execute(select(cls).where(cls.telegram_id == telegram_id))
         return _.scalar()
 
     async def save(self, session: AsyncSession):

@@ -1,4 +1,5 @@
-from sqlalchemy import Table, Column, ForeignKey, Integer, UniqueConstraint, BIGINT
+from sqlalchemy import Table, Column, ForeignKey, UniqueConstraint, BIGINT
+
 from models.db_session import Base
 
 users_to_companies_association_table = Table(

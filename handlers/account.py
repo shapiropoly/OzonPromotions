@@ -1,23 +1,14 @@
 import asyncio
 
-from aiogram import Router, F, types
-from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import StatesGroup, State
-from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
-from sqlalchemy import select, and_
-
-from data.config import bot
-from handlers.connect_store import Process
-from keyboard.main_keyboard import keyboard
-from keyboard.keyboard_account import CompanyCallbackFactory, make_keyboard_account
-from models import User, Company, Product
-from models.db_session import session_db
-from ozon.utils import Utils
-from keyboard.inline_keyboard import make_keyboard
-from utils.checking import checking_user_company, checking_user_client_id, checking_user_api_key
-from utils.message import btn, msg
+from aiogram import Router, F
+from aiogram.types import Message
 from sqlalchemy.ext.asyncio import AsyncSession
-from utils.product_message import product_message
+
+from handlers.connect_store import Process, send_daily_message
+from keyboard.keyboard_account import make_keyboard_account
+from models import User
+from models.db_session import session_db
+from utils.message import btn, msg
 
 router = Router()
 
@@ -33,3 +24,4 @@ async def account(message: Message, session: AsyncSession):
         text=msg("account", "0"),
         reply_markup=make_keyboard_account(companies)
     )
+    await asyncio.create_task(send_daily_message(message=message, session=session, user_id=message.from_user.id))

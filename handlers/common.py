@@ -1,21 +1,18 @@
-import asyncio
-
-from aiogram import F, Router, types
+from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import default_state
 from aiogram.types import Message, ReplyKeyboardRemove
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from handlers.connect_store import Process, send_daily_message
+from handlers.connect_store import Process
 from keyboard.main_keyboard import keyboard
-from keyboard.inline_keyboard import make_keyboard
 from models import User
 from models.db_session import session_db
 from utils.checking import check_connection
-from utils.message import msg, btn
+from utils.message import msg
 
 router = Router()
 

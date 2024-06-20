@@ -1,7 +1,5 @@
 from __future__ import print_function
 
-import asyncio
-
 import aiohttp
 
 
@@ -127,7 +125,6 @@ class Utils:
         async with aiohttp.ClientSession(headers=self.headers) as session:
             async with session.post(url, json=payload) as response:
                 if response.status == 200:
-                    result = await response.json()
                     return
                 else:
                     print(f"Error: {response.status}")
@@ -138,8 +135,6 @@ class Utils:
                         print("Response is not JSON")
                     return None
 
-        return result
-
     async def connection(self):
         promos = await self.promos()
         promos_ids = []
@@ -148,13 +143,3 @@ class Utils:
 
         products = await self.all_promos_products(promos_ids)
         return products
-
-
-async def main():
-    util = Utils('4dcff177-2194-4062-a662-b914c37417f7', '74392')
-    result = await util.checking_connection()
-    print(result)
-
-
-if __name__ == "__main__":
-    asyncio.run(main())

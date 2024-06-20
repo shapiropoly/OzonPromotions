@@ -1,6 +1,6 @@
-from sqlalchemy import Table, Column, ForeignKey, Integer, UniqueConstraint, BIGINT
-from models.db_session import Base
+from sqlalchemy import Table, Column, ForeignKey, UniqueConstraint, BIGINT
 
+from models.db_session import Base
 
 products_to_companies_association_table = Table(
     "products_to_companies_association_table",

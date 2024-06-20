@@ -1,23 +1,20 @@
 import asyncio
 
-from aiogram import Router, F, types
+from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
-from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
-from sqlalchemy import select, and_
+from aiogram.types import Message
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from data.config import bot
-# from handlers.delete_product import send_daily_message
-from keyboard.main_keyboard import keyboard
-from keyboard.keyboard_account import CompanyCallbackFactory
 from keyboard.keyboard_delete_product import make_keyboard_delete_products
+from keyboard.main_keyboard import keyboard
 from models import User, Company, Product
 from models.db_session import session_db
 from ozon.utils import Utils
-from keyboard.inline_keyboard import make_keyboard
 from utils.checking import check_connection, check_double
-from utils.message import btn, msg
-from sqlalchemy.ext.asyncio import AsyncSession
+from utils.message import msg
 from utils.product_message import product_message
 
 router = Router()
@@ -61,9 +58,8 @@ async def send_daily_message(message, session, user_id: int):
                     await bot.send_message(chat_id=user_id, text=product_msg,
                                            reply_markup=make_keyboard_delete_products(new_product, company_id))
 
-            await bot.send_message(chat_id=user_id, text="Ежедневное сообщение")
             #  тут, ниже, время указывается в секундах (сутки – 86400)
-            await asyncio.sleep(10)
+            await asyncio.sleep(86400)
     except Exception as e:
         print(f"Failed to send message to {user_id}: {e}")
 
@@ -143,7 +139,6 @@ async def db_compare_products(util, products, session):
 
 
 @router.message(Process.writing_company_name)
-# @router.message(Registration.writing_company_name)
 @session_db
 async def connection(message: Message, state: FSMContext, session: AsyncSession):
     # Обновление данных состояния
@@ -155,7 +150,6 @@ async def connection(message: Message, state: FSMContext, session: AsyncSession)
 
     # Получение пользователя
     user = await User.get_user(message.from_user.id, session)
-    print(user.name)
 
     if await check_connection(client_id, api_key) == 400:
         await message.answer(
@@ -220,5 +214,3 @@ async def connection(message: Message, state: FSMContext, session: AsyncSession)
                              reply_markup=keyboard)
 
         await state.set_state(Process.account)
-
-        await asyncio.create_task(send_daily_message(message=message, session=session, user_id=message.from_user.id))
