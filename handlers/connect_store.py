@@ -15,7 +15,7 @@ from models import User, Company, Product
 from models.db_session import session_db
 from ozon.utils import Utils
 from keyboard.inline_keyboard import make_keyboard
-from utils.checking import check_connection
+from utils.checking import check_connection, check_double
 from utils.message import btn, msg
 from sqlalchemy.ext.asyncio import AsyncSession
 from utils.product_message import product_message
@@ -105,10 +105,6 @@ async def api_key(message: Message, state: FSMContext, session: AsyncSession):
 @router.message(Process.writing_api_key)
 async def company_name(message: Message, state: FSMContext):
     await state.update_data(api_key=message.text)
-    # TODO сделать проверку на клиент айди + апи кей в бд.
-    #  Если они есть в бд, то не регистрируем компанию и не просим вводить название
-    #  + сказать, что компания есть в БД
-
     await message.answer(
         text=msg("registration", "3"),
         reply_markup=keyboard
@@ -159,6 +155,7 @@ async def connection(message: Message, state: FSMContext, session: AsyncSession)
 
     # Получение пользователя
     user = await User.get_user(message.from_user.id, session)
+    print(user.name)
 
     if await check_connection(client_id, api_key) == 400:
         await message.answer(
@@ -167,31 +164,61 @@ async def connection(message: Message, state: FSMContext, session: AsyncSession)
         )
         await state.set_state(Process.writing_client_id)
 
-    else:
-        loading_message = await message.answer(text="Подождите чуть-чуть, идет загрузка ваших товаров...")
+    elif await check_double(client_id, api_key, session):
 
+        # Если 2 сотрудника реагют одну компанию с разных аккаунтов
+
+        new_company = await Company.get_by_client_id(client_id, session)
+
+        for company in user.companies:
+
+            if company == new_company:
+                # Если пользователь 2 раза регает одну компанию
+                await message.answer(
+                    text=msg("registration", "5"),
+                    reply_markup=keyboard
+                )
+                await state.set_state(Process.account)
+
+                for message_id in range(6):
+                    await message.chat.delete_message(message.message_id - message_id)
+
+                return
+
+        user.companies.append(new_company)
+
+        await new_company.save(session=session)
+
+        for message_id in range(6):
+            await message.chat.delete_message(message.message_id - message_id)
+
+        await message.answer(text=msg("download", "0"),
+                             reply_markup=keyboard)
+
+        await state.set_state(Process.account)
+
+    else:
         # Создание и добавление компании
         company = Company(client_id=client_id, api_key=api_key, company_name=company_name)
         user.companies.append(company)
 
-        util = Utils(api_key, client_id)
+        loading_message = await message.answer(text=msg("download", "1"))
+
+        util = Utils(company.api_key, company.client_id)
 
         # Получение и сохранение продуктов
         products = await util.connection()
-
         await db_add_products(session, util, company, products)
-
         await company.save(session=session)
-
-        # Установка нового состояния
-        await state.set_state(Process.account)
 
         await loading_message.delete()
 
         for message_id in range(6):
             await message.chat.delete_message(message.message_id - message_id)
 
-        await message.answer(text="Подключение прошло успешно!",
+        await message.answer(text=msg("download", "0"),
                              reply_markup=keyboard)
+
+        await state.set_state(Process.account)
 
         await asyncio.create_task(send_daily_message(message=message, session=session, user_id=message.from_user.id))

@@ -1,17 +1,5 @@
-import asyncio
-
+from models import Company
 from ozon.utils import Utils
-
-
-async def checking_user_company(user, company):
-    """
-    Gets user and company objects
-    :param User: telegram_id
-    :param Company: id
-    :return: A tuple containing the client ID and API key of the company
-    """
-    if company in user.companies:
-        return company.client_id, company.api_key
 
 
 async def check_connection(client_id, api_key):
@@ -19,31 +7,11 @@ async def check_connection(client_id, api_key):
     return await utils.checking_connection()
 
 
-# async def main():
-#     result = await checking_connection('62-b914c37417f7', '74392')
-#     print(result)
-#
-# if __name__ == "__main__":
-#     asyncio.run(main())
+# Проверка на одинаковый client_id и api_key в БД
+async def check_double(client_id, api_key, session):
+    company = await Company.get_by_client_id(client_id, session)
+    if company:
+        current_api_key = company.api_key
 
-
-async def checking_user_client_id(user, company):
-    """
-    Gets user and company objects
-    :param User: telegram_id
-    :param Company: id
-    :return: A tuple containing the client ID of the company
-    """
-    if company in user.companies:
-        return str(company.client_id)
-
-
-async def checking_user_api_key(user, company):
-    """
-    Gets user and company objects
-    :param User: telegram_id
-    :param Company: id
-    :return: A tuple containing the API key of the company
-    """
-    if company in user.companies:
-        return str(company.api_key)
+        if current_api_key == api_key:
+            return True
