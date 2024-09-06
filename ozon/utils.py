@@ -1,5 +1,7 @@
 from __future__ import print_function
 
+import asyncio
+
 import aiohttp
 
 
@@ -64,7 +66,7 @@ class Utils:
 
         return all_candidates
 
-    async def promos_products(self, action_id):
+    async def promos_products(self, action_id, action_title):
         endpoint = '/v1/actions/products'
         url = self.base_url + endpoint
         payload = {
@@ -85,12 +87,13 @@ class Utils:
                     return None
         for product in all_products["result"]["products"]:
             product["action_id"] = action_id
+            product["action_title"] = action_title
         return all_products
 
-    async def all_promos_products(self, action_ids):
+    async def all_promos_products(self, promos):
         all_products = []
-        for action_id in action_ids:
-            all_products.extend((await self.promos_products(action_id))['result']['products'])
+        for action_id, action_title in promos.items():
+            all_products.extend((await self.promos_products(action_id, action_title))['result']['products'])
         return all_products
 
     async def product_name(self, product_id):
@@ -137,9 +140,9 @@ class Utils:
 
     async def connection(self):
         promos = await self.promos()
-        promos_ids = []
+        promos_dict = {}
         for promo in promos['result']:
-            promos_ids.append(promo['id'])
+            promos_dict[promo['id']] = promo['title']
 
-        products = await self.all_promos_products(promos_ids)
+        products = await self.all_promos_products(promos_dict)
         return products

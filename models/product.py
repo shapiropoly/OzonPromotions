@@ -24,6 +24,7 @@ class Product(Base):
     price: Mapped[int]
     action_price: Mapped[int]
     action_id: Mapped[int]
+    action_title: Mapped[str]
     companies: Mapped[List[Company]] = relationship(
         secondary=products_to_companies_association_table,
         back_populates="products",
@@ -75,7 +76,7 @@ class Product(Base):
             await session.commit()
 
     @classmethod
-    async def clear_products_table(cls, client_id: int, session: AsyncSession) -> None:
+    async def clear_products_table(cls, client_id: str, session: AsyncSession) -> None:
         """
         Очистить данные таблицы products связанные с компанией по client_id.
 

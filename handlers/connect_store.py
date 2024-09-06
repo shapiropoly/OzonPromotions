@@ -117,7 +117,8 @@ async def db_add_products(session, util, company, products):
                                    name=product['name'],
                                    price=product['price'],
                                    action_price=product['action_price'],
-                                   action_id=product['action_id'])
+                                   action_id=product['action_id'],
+                                   action_title=product['action_title'])
         company.products.append(product_instance)
 
         await product_instance.save(session=session)
